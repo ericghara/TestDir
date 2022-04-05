@@ -1,8 +1,6 @@
-gradlew.bat
 .gradle
 .idea
 build
-gradle
 
 # Compiled class file
 *.class

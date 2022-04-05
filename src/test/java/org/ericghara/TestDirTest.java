@@ -37,11 +37,11 @@ class TestDirTest {
             "subdir and file" | aFolder/aFile |  1.1234
             """)
     void createFile(String _label, String relativePath, BigDecimal sizeMB) throws IOException {
-        Path foundP = testDir.createFile(relativePath, sizeMB);
+        TestFile testFile = testDir.createFile(relativePath, sizeMB, MB);
         Path relP =  Paths.get(relativePath);
         Path expectedP = tempDir.resolve(relP);
 
-        assertEquals(expectedP, foundP);  // reports correct path
+        assertEquals(expectedP, testFile.getPath());  // reports correct path
         assertTrue(Files.exists(expectedP) ); // creates file
         assertEquals(MB.toBytes(sizeMB),  Files.size(expectedP) ); // file size correct
         assertTrue(testDir.getFiles()

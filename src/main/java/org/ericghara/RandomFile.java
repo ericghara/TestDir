@@ -19,11 +19,6 @@ public class RandomFile extends DummyFile {
         this(filePath, unit.toBytes(size) );
     }
 
-    // for testing
-    RandomFile(Path filePath) {
-        super(filePath);
-    }
-
     @Override
     public String toString() {
         return format("%s %s", this.getClass(), filePath);

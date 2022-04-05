@@ -1,5 +1,7 @@
 package org.ericghara;
 
+import org.ericghara.exception.FailedDirCreationException;
+
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -11,7 +13,6 @@ import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.SplittableRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,17 +39,15 @@ public class TestDir {
     private final LinkedList<TestFile> files = new LinkedList<>(); // all files successfully written
     private final LinkedList<Path> dirs = new LinkedList<>(); // all dirs successfully written
 
-    private final SplittableRandom random = new SplittableRandom();
-
     /**
-     * Initializes a Test Movie Dir from a csv template. The location of the movie dir is defined by the testDir argument.
+     * Initializes a TestDir from a csv template. The location of the movie dir is defined by the {@code dirPath} argument.
      *
      * @param csvFile the csv file
-     * @param testDir absolute path to the desired directory
+     * @param dirPath absolute path to the desired directory
      * @see TestDir#getResourceFile
      */
-    public TestDir(File csvFile, Path testDir) {
-        this(testDir);
+    public TestDir(File csvFile, Path dirPath) {
+        this(dirPath);
         Scanner csvScanner = getFileScanner(csvFile);
         parse(csvScanner);
     }
@@ -104,68 +103,99 @@ public class TestDir {
     }
 
     /**
-     * Creates file of specified size in the given relative path.  The absolute path is constructed by merging
-     * the {@code testDir} path with the given {@code pathString}.  Any new directories required to create a file
-     * at the specified path are created if the parent path does not yet exist.
-     * @param pathString relative file path
-     * @param sizeMB size of the file to create in MB
+     * Creates file of specified size at the given path.  The path if absolute must be within {@code testDir}
+     * Any new directories required to complete the file path are created.
+     * @param pathString file path
+     * @param size size of the file to create in {@code unit}
+     * @param unit the units which size was provided in
      * @return the absolute path to the file
+     * @see org.ericghara.TestDir#createFile(Path, BigDecimal, SizeUnit)
      */
-    Path createFile(String pathString, BigDecimal sizeMB) {
-        Path filePath = testDir.resolve(Paths.get(pathString) );
-        Path parentPath = filePath.getParent();
-        try {
-            if (Files.notExists(parentPath, LinkOption.NOFOLLOW_LINKS)) {
-                createDirs(parentPath);
-            }
-            var file = new RandomFile(filePath, sizeMB, MB);
-            files.addLast(file);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Could not create the file:" + filePath + ".", e);
-        }
-        return filePath;
+    public TestFile createFile(String pathString, BigDecimal size, SizeUnit unit) {
+        Path path = Paths.get(pathString);
+        return createFile(path, size, unit);
     }
 
     /**
-     * Creates a directory at the given relative path.  If the parent path to the directory does not yet exist,
-     * directories are created in order to complete the path.  The absolute path to the directory is constructed
-     * by merging {@code testDir}'s path with the {@code pathString}.
-     * @param pathString relative location of the new directory
-     * @return absolute path to the directory
+     * Creates file of specified size at the given path.  The path if absolute must be within {@code testDir}
+     * Any new directories required to complete the file path are created.
+     * @param path file path
+     * @param size size of the file to create in {@code unit}
+     * @param unit the units which size was provided in
+     * @return the absolute path to the file
+     * @see org.ericghara.TestDir#createFile(String, BigDecimal, SizeUnit)
      */
-    Path createDirs(String pathString) {
-        Path absPath = testDir.resolve(pathString);
-        createDirs(absPath);
-        return absPath;
+    public TestFile createFile(Path path, BigDecimal size, SizeUnit unit) throws IllegalArgumentException {
+        validatePath(path);
+        Path filePath = testDir.resolve(path);
+        Path parentPath = filePath.getParent();
+        if (Files.notExists(parentPath, LinkOption.NOFOLLOW_LINKS)) {
+            createDirs(parentPath);
+        }
+        try {
+            var file = new RandomFile(filePath, size, unit);
+            files.addLast(file);
+            return file;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Could not create the file:" + filePath + ".", e);
+        }
     }
 
-    public void createDirs(Path path) throws IllegalArgumentException {
+    /**
+     * Creates a directory at the given path.  If the path is absolute, it must be within the {@code TestDir}.
+     * If the parent path to the directory does not yet exist, directories are created in order to complete the path.<br><br>
+     * @param pathString path to the directory to create (may be relative or absolute)
+     * @return absolute path to the created directory
+     * @throws IllegalArgumentException if {@code pathString} is not within the {@code TestDir}
+     * @throws FailedDirCreationException if there is any error creating the dirs
+     */
+    public Path createDirs(String pathString) throws IllegalArgumentException, FailedDirCreationException {
+        Path path = Paths.get(pathString);
+        return createDirs(path);
+    }
+
+    /**
+     * Creates a directory at the given path.  If the path is absolute, it must be within the {@code TestDir}.
+     * If the parent path to the directory does not yet exist, directories are created in order to complete the path.<br><br>
+     * @param path path to the directory to create (may be relative or absolute)
+     * @return absolute path to the created directory
+     * @throws IllegalArgumentException if {@code path} is not within the {@code TestDir}
+     * @throws FailedDirCreationException if there is any error creating the dirs
+     */
+    public Path createDirs(Path path) throws IllegalArgumentException, FailedDirCreationException {
+        validatePath(path);
+        Path absPath = testDir.resolve(path);
         try {
-            Files.createDirectories(path);
+            Files.createDirectories(absPath);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Could not create dir " + path, e);
+            throw new FailedDirCreationException(absPath.toString(), e);
         }
-        dirs.addLast(path);
+        dirs.addLast(absPath);
+        return absPath;
     }
 
     // Parse the csv, writing the dir/file structure to disk
     void parse(Scanner csvScanner) {
         for (int i = 0; csvScanner.hasNextLine(); i++) {
-            String line = hashComments.reset(csvScanner.nextLine()).replaceAll(""); // strip comments
-            String[] splitLine = whitespaceNotInQuotes.pattern().split(line); // split columns
-            if (splitLine.length >= 2 && textInQuotes.reset(splitLine[1]).find() ) {
+            String line = hashComments.reset(csvScanner.nextLine())
+                                      .replaceAll(""); // strip comments
+            String[] splitLine = whitespaceNotInQuotes.pattern()
+                                                      .split(line); // split columns
+            if (splitLine.length >= 2 &&
+                    textInQuotes.reset(splitLine[1])
+                                .find() ) {
                 splitLine[1] = textInQuotes.group(); // remove quotes
             }
             if (splitLine.length == 1 && splitLine[0].isEmpty()) { // ignore empty line (or a stripped comment line)
                 continue;
             }
             if (splitLine[0].equalsIgnoreCase("D") && splitLine.length == 2 ) { // directory
-                Path dirPath = createDirs(splitLine[1]);
+                createDirs(splitLine[1]);
             }
             else if (splitLine[0].equalsIgnoreCase("F") && splitLine.length == 3) { // file
                 String pathString = splitLine[1];
                 BigDecimal sizeMB = new BigDecimal(splitLine[2]);
-                Path filePath = createFile(pathString, sizeMB);
+                createFile(pathString, sizeMB, MB);
             }
             else {
                 throw new IllegalArgumentException("Couldn't parse line: " + i + ".");
@@ -190,6 +220,12 @@ public class TestDir {
 
     static Matcher compileMatcher(String regEx) {
         return Pattern.compile(regEx).matcher("");
+    }
+
+    void validatePath(Path path) throws IllegalArgumentException {
+        if (path.isAbsolute() && !path.startsWith(testDir) ) {
+            throw new IllegalArgumentException("The specified path is not within the TestDir. " + path);
+        }
     }
 
     void mustBeAbsolute(Path path) {
