@@ -1,4 +1,4 @@
-package org.ericghara.parser;
+package org.ericghara.parser.rowvalidator;
 
 import com.opencsv.exceptions.CsvValidationException;
 import com.opencsv.validators.RowValidator;
@@ -8,6 +8,9 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.ericghara.parser.LineType.DIRECTORY;
+import static org.ericghara.parser.LineType.FILE;
 
 public class CorrectNumColumnsValidator implements RowValidator {
 
@@ -32,19 +35,26 @@ public class CorrectNumColumnsValidator implements RowValidator {
         } catch (IllegalStateException e) {
             return false;
         }
-        if (last == 0 ) { // blank line.  Bean filter will filter
-            return true;
+        switch (last) {
+            case 0 -> {
+                return true;
+            }
+            case 2 -> {
+                return row[0].equals(DIRECTORY.name() );
+            }
+            case 3 -> {
+                return row[0].equals(FILE.name() );
+            }
+            case 4 -> {
+                return row[0].equals(FILE.name() )
+                        && unitSet.contains(row[2]);
+            }
+            default -> {
+                return false;
+            }
         }
-        if (last == 2 && row[0].equals("D") ) {
-            return true;
-        }
-        if (last == 3
-                && row[0].equals("F")
-                && unitSet.contains(row[2]) ) {
-            return true;
-        }
-        return false;
     }
+
 
     int lastBlank(String[] row) throws IllegalStateException {
         if (row.length == 0) {
@@ -62,8 +72,6 @@ public class CorrectNumColumnsValidator implements RowValidator {
         }
         return last;
     }
-
-
 
     @Override
     public void validate(String[] row) throws CsvValidationException {
