@@ -11,12 +11,12 @@ class EmptyLineFilterTest {
     @Test
     void allowLineReturnsTrueForBlank() {
         String[] firstBlank = {"", "notBlank"};
-        assertTrue(filter.allowLine(firstBlank) );
+        assertFalse(filter.allowLine(firstBlank) );
     }
 
     @Test
     void allowLineReturnsFalseForFull() {
         String[] firstSpace = {" ", "notBlank"};
-        assertFalse(filter.allowLine(firstSpace) );
+        assertTrue(filter.allowLine(firstSpace) );
     }
 }

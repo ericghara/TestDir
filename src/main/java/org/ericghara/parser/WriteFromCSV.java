@@ -4,17 +4,17 @@ import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.CsvToBeanBuilder;
+import com.opencsv.bean.*;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import org.ericghara.SizeUnit;
 import org.ericghara.TestDir;
 import org.ericghara.exception.DirCreationException;
 import org.ericghara.exception.FileCreationException;
 import org.ericghara.exception.ReaderCloseException;
 import org.ericghara.parser.beanfilter.EmptyLineFilter;
-import org.ericghara.parser.entity.TestDirCSVLine;
-import org.ericghara.parser.rowprocessor.CommentAndLineTypeProcessor;
+import org.ericghara.parser.dto.TestDirCSVLine;
+import org.ericghara.parser.rowprocessor.TestDirRowProcessor;
 import org.ericghara.parser.rowvalidator.CorrectNumColumnsValidator;
 
 import java.io.IOException;
@@ -39,13 +39,13 @@ import static org.ericghara.parser.LineType.FILE;
  * The CSV format is as follows:
  * <ul>
  *     <li>
- *         A file entry must contain 3-4 columns.  The columns are read in a fixed order.
+ *         A file entry must contain 4 columns.
  *         <ol>
  *             <li>F - this key specifies a file entry type (non case sensitive)</li>
- *             <li>Path - the file path, if the path has spaces, the path must be enclosed in quotes.  If quotes
- *             occur in the path, they must be escaped with: <code>\\</code>.</li>
+ *             <li>Path - the file path.  Should be a relative file path, e.g. {@code aDir/aFile}, not {@code /aDir/aFile}</li>
  *             <li>size - the size of the file to write in the specified {@code unit}</li>
- *             <li>unit - (optional) the unit of the size.  Valid units should correspond to {@link SizeUnit} values (not case sensitive).  The default is MB.</li>
+ *             <li>unit - the unit of the size.  Valid units should correspond to {@link SizeUnit} values
+ *             (not case sensitive).</li>
  *         </ol>
  *     </li>
  *     <li>
@@ -57,28 +57,33 @@ import static org.ericghara.parser.LineType.FILE;
  *         </ol>
  *     </li>
  *     <li>
- *         The CSV delimiter is a space
+ *         No header is required.  If a header is desired include it as a comment.
  *     </li>
  *     <li>
- *         A delimiter in quotes is ignored (e.g. {@code "ignored delimiter"})
+ *         The CSV delimiter is a comma (@code{,})
  *     </li>
  *     <li>
  *         Comments are indicated by a {@code #}.  All following text on the line will be ignored
  *     </li>
  *     <li>
- *         Empty lines are supported and simply ignored
+ *         Empty lines are supported and simply ignored.  Leading and trailing whitespace in each column
+ *         is removed (irrespective of if it is within quotes).  Whitespace within filenames is not removed.
  *     </li>
  *     <li>
- *         No header is required.  If a header is desired include it as a comment.
+ *         Paths that include a comma the path should be enclosed in quotes: {@code "aDir/File,with,commas"}.
+ *     </li>
+ *     <li>
+ *         If a path includes a quote character {@code (")} it must be escaped with a double backslash ({@code //}),<br>
+ *         E.g {@code aDir/File\\"with\\"quotes} represents the path {@code aDir/file"with"quotes}
  *     </li>
  *     <br><br>
  *     Example:
  *     <pre>
  *         # This is an example csv file
- *         # FileType   Path            Size  Units(Optional)
- *           D          aDir
- *           F          "aDir/b File"   16    B
- *           F          bDir/aFile      1.34         # defaults to MB, bDir is implicitly created
+ *         # FileType  Path        Size  Units(Optional)
+ *           D,        aDir
+ *           F,        aDir/b File  16,    B  # read in as aDir/b File
+ *           F,        bDir/aFile, 1.34   MB
  *     </pre>
  * </ul>
  */
@@ -93,6 +98,7 @@ public class WriteFromCSV {
     CSVParser buildParser() {
         var builder = new CSVParserBuilder();
         return builder.withEscapeChar('\\')
+                .withSeparator(',')
                 .withQuoteChar('"')
                 .withIgnoreLeadingWhiteSpace(true)
                 .build();
@@ -125,7 +131,9 @@ public class WriteFromCSV {
 
         private final Map<LineType, Consumer<TestDirCSVLine>> funcMap;
 
+        @NonNull
         private final TestDir testDir;
+        @NonNull
         private final Reader csvStream;
 
         CSVWriteJob(TestDir testDir, Reader csvStream) {
@@ -133,36 +141,59 @@ public class WriteFromCSV {
             this.csvStream = csvStream;
             funcMap = buildFuncMap();
         }
+        
+        /* For Testing */
+        CSVWriteJob(TestDir testDir, Reader csvStream,
+                    Map<LineType, Consumer<TestDirCSVLine>> funcMap) {
+            this.testDir = testDir;
+            this.csvStream = csvStream;
+            this.funcMap = funcMap;
+        }
 
-        void write() throws FileCreationException, DirCreationException {
+        void write() throws
+                FileCreationException, DirCreationException, IllegalArgumentException {
             var result = new CSVResult();
             Map<LineType, List<TestDirCSVLine>> results = result.getResultsByLineType(csvStream);
             results.forEach(this::writeLineType);
         }
 
         void writeLineType(LineType lineType, List<TestDirCSVLine> lines) throws UnsupportedOperationException {
-            var writer = funcMap.get(lineType);
-            if (Objects.isNull(writer)) {
+            var writeFunc = funcMap.get(lineType);
+            if (Objects.isNull(writeFunc)) {
                 throw new UnsupportedOperationException(
                         format("Improper configuration.  No writer for %s defined.", lineType));
             }
-            lines.forEach(writer);
+            lines.forEach(writeFunc);
         }
 
         Map<LineType, Consumer<TestDirCSVLine>> buildFuncMap() {
             return Map.of(FILE, this::writeFile,
-                    DIRECTORY, this::writeDir);
+                    DIRECTORY, this::writeDirs);
         }
 
-        void writeFile(TestDirCSVLine line) throws FileCreationException {
-            String pathString = line.getPathStr();
+        void assertCorrectType(TestDirCSVLine line, LineType expectedType) throws IllegalArgumentException {
+            var found = line.getType();
+            if (expectedType != found) {
+                throw new IllegalArgumentException(
+                        format("Could not perform the write.  " +
+                                "Expected a %s but received a %s", expectedType, found) );
+            }
+        }
+
+        void writeFile(TestDirCSVLine line) throws FileCreationException, IllegalArgumentException {
+            assertCorrectType(line, FILE);
+            String pathString = line.getPath();
             BigDecimal size = line.getSize();
             SizeUnit unit = line.getUnit();
             testDir.createFile(pathString, size, unit);
         }
 
-        void writeDir(TestDirCSVLine line) throws DirCreationException {
-            String pathString = line.getPathStr();
+        void writeDirs(TestDirCSVLine line) throws DirCreationException, IllegalArgumentException {
+            assertCorrectType(line, DIRECTORY);
+            if (Objects.nonNull(line.getSize() ) || Objects.nonNull(line.getUnit() ) ) {
+                throw new IllegalArgumentException("Received a TestDirCSV line with extraneous arguments");
+            }
+            String pathString = line.getPath();
             testDir.createDirs(pathString);
         }
     }
@@ -179,7 +210,7 @@ public class WriteFromCSV {
          */
         public Map<LineType, List<TestDirCSVLine>> getResultsByLineType(Reader in) {
             return getResults(in).stream()
-                    .collect(Collectors.groupingBy(TestDirCSVLine::getLineType));
+                    .collect(Collectors.groupingBy(TestDirCSVLine::getType) );
         }
 
         /**
@@ -193,7 +224,8 @@ public class WriteFromCSV {
             try (csvStream) {
                 var reader = buildCSVReader(csvStream);
                 var toBeans = buildCsvToBean(reader);
-                return toBeans.stream().toList();
+                var out = toBeans.parse();
+                return out;
             } catch (IOException e) {
                 throw new ReaderCloseException("Failure closing the csvStream.", e);
             }
@@ -201,7 +233,7 @@ public class WriteFromCSV {
 
         CSVReader buildCSVReader(Reader in) {
             var builder = new CSVReaderBuilder(in);
-            var rowProcessor = new CommentAndLineTypeProcessor();
+            var rowProcessor = new TestDirRowProcessor();
             var rowValidator = new CorrectNumColumnsValidator();
             return builder.withCSVParser(parser)
                     .withRowProcessor(rowProcessor)
@@ -209,10 +241,17 @@ public class WriteFromCSV {
                     .build();
         }
 
+        MappingStrategy<TestDirCSVLine> buildMappingStrategy() {
+            ColumnPositionMappingStrategy<TestDirCSVLine> strategy = new ColumnPositionMappingStrategy<>();
+            strategy.setType(TestDirCSVLine.class);
+            return strategy;
+        }
+
         CsvToBean<TestDirCSVLine> buildCsvToBean(CSVReader csvReader) {
             var filter = new EmptyLineFilter();
             var builder = new CsvToBeanBuilder<TestDirCSVLine>(csvReader);
-            return builder.withType(TestDirCSVLine.class)
+            return builder
+                    .withMappingStrategy(buildMappingStrategy() )
                     .withFilter(filter)
                     .build();
         }

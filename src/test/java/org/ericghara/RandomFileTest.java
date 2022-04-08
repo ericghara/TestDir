@@ -52,7 +52,7 @@ class RandomFileTest {
     }
 
     // Note: since this a probabilistic test, it may occasionally fail
-    @ParameterizedTest
+    @ParameterizedTest(name="Random byte distribution test (may occasionally fail) - alpha: {0}")
     @ValueSource(doubles = {.01, .05 })
     void RandomFileHasRandomlyDistributedBytes(double alpha) throws IOException {
         var pathA = tempDir.resolve(Paths.get("A") );

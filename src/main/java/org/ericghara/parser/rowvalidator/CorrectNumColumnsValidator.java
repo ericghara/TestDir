@@ -17,10 +17,10 @@ public class CorrectNumColumnsValidator implements RowValidator {
     private final Set<String> unitSet;
 
     public CorrectNumColumnsValidator() {
-        unitSet = getUnitSet();
+        unitSet = initUnitSet();
     }
 
-    Set<String> getUnitSet() {
+    Set<String> initUnitSet() {
         return Stream.of(SizeUnit.values())
                      .map(e-> e.name().toUpperCase() )
                      .collect(Collectors.toUnmodifiableSet());
@@ -31,23 +31,20 @@ public class CorrectNumColumnsValidator implements RowValidator {
     public boolean isValid(String[] row) {
         int last;
         try {
-            last = lastBlank(row);
-        } catch (IllegalStateException e) {
+            last = lastFull(row);
+        } catch (NullPointerException e) {
             return false;
         }
         switch (last) {
-            case 0 -> {
+            case -1 -> {
                 return true;
             }
-            case 2 -> {
+            case 1 -> {
                 return row[0].equals(DIRECTORY.name() );
             }
             case 3 -> {
-                return row[0].equals(FILE.name() );
-            }
-            case 4 -> {
                 return row[0].equals(FILE.name() )
-                        && unitSet.contains(row[2]);
+                        && unitSet.contains(row[3]);
             }
             default -> {
                 return false;
@@ -55,18 +52,13 @@ public class CorrectNumColumnsValidator implements RowValidator {
         }
     }
 
-
-    int lastBlank(String[] row) throws IllegalStateException {
-        if (row.length == 0) {
-            return 0;
-        }
-        int last = row.length;
+    int lastFull(String[] row) throws NullPointerException {
+        Objects.requireNonNull(row, "Received a null row");
+        int last = -1;
         for (int i = 0; i < row.length; i++) {
             String col = row[i];
-            if (Objects.isNull(col) ) {
-                throw new IllegalStateException("Received a null column");
-            }
-            if (col.isBlank() ) {
+            Objects.requireNonNull(row, "Received a null column.  Col: " + i);
+            if (!col.isBlank() ) {
                 last = i;
             }
         }

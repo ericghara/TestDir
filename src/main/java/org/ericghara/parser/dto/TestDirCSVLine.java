@@ -1,10 +1,7 @@
-package org.ericghara.parser.entity;
+package org.ericghara.parser.dto;
 
 import com.opencsv.bean.CsvBindByPosition;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.ericghara.SizeUnit;
 import org.ericghara.parser.LineType;
 
@@ -14,13 +11,15 @@ import java.math.BigDecimal;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class TestDirCSVLine {
 
-    @CsvBindByPosition(required = true, position = 0)
-    private LineType lineType;
+    @CsvBindByPosition(position = 0)
+    private LineType type;
 
-    @CsvBindByPosition(required = true,  position = 1)
-    private String pathStr;
+    @CsvBindByPosition(position = 1)
+    private String path;
 
     @CsvBindByPosition(position = 2)
     private BigDecimal size;

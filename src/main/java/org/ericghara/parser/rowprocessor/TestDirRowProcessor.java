@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CommentAndLineTypeProcessor implements RowProcessor {
+public class TestDirRowProcessor implements RowProcessor {
 
     private final String hashCommentsRegEx = "(\\b|^)\\s*#.*$";
     private final Matcher hashComments = Pattern.compile(hashCommentsRegEx).matcher("");
@@ -20,7 +20,7 @@ public class CommentAndLineTypeProcessor implements RowProcessor {
 
     record ProcessedColumn(boolean hasComment, String text){}
 
-    public CommentAndLineTypeProcessor() {
+    public TestDirRowProcessor() {
         enumMap = initEnumMap();
     }
 
@@ -34,7 +34,7 @@ public class CommentAndLineTypeProcessor implements RowProcessor {
 
     @Override
     public void processRow(String[] row) {
-        commentStripper(row);
+        rowStripper(row);
         assignLineType(row);
     }
 
@@ -45,15 +45,20 @@ public class CommentAndLineTypeProcessor implements RowProcessor {
         throw new UnsupportedOperationException("Method not implemented");
     }
 
-    void commentStripper(String[] row) {
-        Function<String, ProcessedColumn> stripper = this::processComment;
+    void rowStripper(String[] row) {
+        Function<String, ProcessedColumn> whiteSpaceStripper = this::processComment;
         for (int i = 0; i < row.length; i++) {
-            ProcessedColumn col = stripper.apply(row[i]);
+            stripWhitespace(i, row);
+            ProcessedColumn col = whiteSpaceStripper.apply(row[i]);
             if (col.hasComment() ) {
                 row[i] = col.text();
-                stripper = this::returnsEmptyText;
+                whiteSpaceStripper = this::returnsEmptyText;
             }
         }
+    }
+
+    void stripWhitespace(int i, String[] row) {
+        row[i] = row[i].stripLeading().stripTrailing();
     }
 
     ProcessedColumn returnsEmptyText(String column) {
