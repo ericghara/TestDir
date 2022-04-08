@@ -28,13 +28,31 @@ import static org.ericghara.parser.LineType.DIRECTORY;
 import static org.ericghara.parser.LineType.FILE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class WriteFromCSVTest {
 
     WriteFromCSV writer = new WriteFromCSV();
+
+    @Mock
+    TestDir testDir;
+
+    @Test
+    @DisplayName("write() integration test of nested classes")
+    void writeTest() {
+        var csv = """
+                            F, aFile, 1, MB
+                            D, aDir
+                        """;
+        var csvStream = ReaderUtils.getStringReader(csv);
+
+        writer.write(testDir, csvStream);
+
+        verify(testDir, times(1) ).createDirs(any(String.class) );
+        verify(testDir, times(1) ).createFile(any(String.class), any(BigDecimal.class), any(SizeUnit.class) );
+    }
+
 
     @Nested
     @DisplayName("CSVResult tests")
@@ -69,7 +87,7 @@ class WriteFromCSVTest {
             "Parse simple File"                    | F, aFile, 1, MB       | FILE | aFile     |   1  |  MB
             "Parse file with escaped comma"        | F, a\\,File, 1, MB    | FILE | a,File    |   1  |  MB
             "Parse file in a subdir"               | F, aDir/aFile, 1, MB  | FILE | aDir/aFile|   1  |  MB
-            "Parse fields with trailing whitespace"| "F , aFile , 1 , MB " | FILE | aFile     |   1  |  MB 
+            "Parse fields with trailing whitespace"| "F , aFile , 1 , MB " | FILE | aFile     |   1  |  MB
             """)
         void getResultsIntegrationTests(String _label, String line, String type, String pathStr, BigDecimal size, String units) {
             var resultsList = results.getResults(ReaderUtils.getStringReader(line));
@@ -131,9 +149,6 @@ class WriteFromCSVTest {
     @Nested
     @DisplayName("CSVWriteJob Tests")
     class CSVWriteJobTests {
-
-        @Mock
-        TestDir testDir;
 
         @Mock
         Reader csvStream;
@@ -217,13 +232,33 @@ class WriteFromCSVTest {
         }
 
         @Test
-        @DisplayName("writeLineType calls proper methods")
-        void writeLineTypeCallsProperMethods() {
-            var lineList = list.of(mock(TestDirCSVLine.class));
-
-
-
+        @DisplayName("writeLineType FILE calls TestDir#createFile")
+        void writeLineTypeFILECalls() {
+            var lineList = List.of(new TestDirCSVLine(FILE, "aFile", BigDecimal.ONE, MB) );
+            job.writeLineType(FILE, lineList);
+            verify(testDir, times(1)).createFile(any(String.class), any(BigDecimal.class), any(SizeUnit.class) );
         }
 
+        @Test
+        @DisplayName("writeLineType DIRECTORY calls TestDir#createFile")
+        void writeLineTypeDIRECTORYCalls() {
+            var lineList = List.of(new TestDirCSVLine(DIRECTORY, "aFile", null, null) );
+            job.writeLineType(DIRECTORY, lineList);
+            verify(testDir, times(1)).createDirs(any(String.class) );
+        }
+
+        @Test
+        @DisplayName("write calls writeLineType expected number of times")
+        void writeCallsWriteLineType() {
+            var csv = """
+                            F, aFile, 1, MB
+                            D, aDir
+                        """;
+            csvStream = ReaderUtils.getStringReader(csv);
+            beforeEach();  // reconstruct with an actual reader
+            job.write();
+            verify(testDir, times(1) ).createDirs(any(String.class) );
+            verify(testDir, times(1) ).createFile(any(String.class), any(BigDecimal.class), any(SizeUnit.class) );
+        }
     }
 }

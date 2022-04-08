@@ -3,6 +3,7 @@ package org.ericghara;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
@@ -78,17 +79,22 @@ class DummyFileTest {
     }
 
     @Test
-    void equalsDifferentPathFalse() {
+    void equalsDifferentPathFalse()  {
         Path relPathA = Paths.get("aFile");
         Path relPathB = Paths.get("bFile");
 
-        Path filePathA = tempDir.resolve(relPathA);
-        Path filePathB = tempDir.resolve(relPathB);
+        try(MockedStatic<Files> mockFiles = mockStatic(Files.class) ) {
+            mockFiles.when(() -> Files.createFile(any(Path.class)))
+                    .thenReturn(Paths.get("fake/path"));
 
-        var dummyA = new EmptyFile(filePathA);
-        var dummyB = new EmptyFile(filePathB);
+            Path filePathA = tempDir.resolve(relPathA);
+            Path filePathB = tempDir.resolve(relPathB);
 
-        assertNotEquals(dummyA, dummyB);
+            var dummyA = new EmptyFile(filePathA);
+            var dummyB = new EmptyFile(filePathB);
+
+            assertNotEquals(dummyA, dummyB);
+        }
     }
 
 }
