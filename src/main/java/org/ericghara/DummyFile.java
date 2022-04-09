@@ -1,5 +1,7 @@
 package org.ericghara;
 
+import org.ericghara.exception.FileReadException;
+
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,13 +26,13 @@ public abstract class DummyFile implements TestFile {
      * Reads and returns the current file size.
      * <br><br>
      * @return {@code long} file size in bytes
-     * @throws RuntimeException if there is an error retrieving the file size
+     * @throws FileReadException if there is an error retrieving the file size
      */
-    public long getSize() throws RuntimeException {
+    public long getSize() throws FileReadException {
         try {
             return Files.size(filePath);
         } catch (Exception e) {
-            throw new RuntimeException(
+            throw new FileReadException (
                     "Error while retrieving file size: " + filePath);
         }
     }
@@ -40,10 +42,14 @@ public abstract class DummyFile implements TestFile {
      * <br><br>
      * @param unit {@code SizeUnit} size units to return i.e. kB, mB etc.
      * @return {@code BigDecimal} file size in the specified units
-     * @throws RuntimeException if there is an error retrieving the file size
+     * @throws FileReadException there is an error retrieving the file size
      */
-    public BigDecimal getSize(SizeUnit unit) throws RuntimeException {
+    public BigDecimal getSize(SizeUnit unit) throws FileReadException {
         return unit.fromBytes(getSize() );
+    }
+
+    public boolean exists() {
+        return Files.exists(filePath);
     }
 
     @Override

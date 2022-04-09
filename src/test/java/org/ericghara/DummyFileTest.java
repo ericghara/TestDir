@@ -1,5 +1,7 @@
 package org.ericghara;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -29,20 +31,30 @@ class DummyFileTest {
     @TempDir
     Path tempDir;
 
+    MockedStatic<Files> filesMock;
+
+    @BeforeEach
+    void before() {
+        filesMock = mockStatic(Files.class);
+    }
+
+    @AfterEach
+    void after() {
+        filesMock.closeOnDemand(); // tolerant of receiving an already closed mock;
+    }
+
     EmptyFile noWriteConstructor(Path path) {
         Path absPath = tempDir.resolve(path);
         // prevents file writes by mocking java.nio.file.Files class
-        try(MockedStatic<Files> mockFiles = mockStatic(Files.class) ) {
-            mockFiles.when(
-                            () -> Files.createFile(any(Path.class)))
-                    .thenReturn(absPath);
-            return new EmptyFile(absPath);
-        }
+        filesMock.when( () -> Files.createFile(any(Path.class)))
+                 .thenReturn(absPath);
+        return new EmptyFile(absPath);
     }
 
     @Test
     // this test actually writes to disk
     void createMakesFile() {
+        filesMock.closeOnDemand(); // don't want to mock during this test;
         Path relPath = Paths.get("aFile");
         Path filePath = tempDir.resolve(relPath);
         var dummy = new EmptyFile(filePath);
@@ -54,11 +66,33 @@ class DummyFileTest {
         var expected = 1234L;
         Path relPath = Paths.get("aFile");
         var dummy = noWriteConstructor(relPath);
-        try (MockedStatic<Files> mockFiles = mockStatic(Files.class)) {
-            mockFiles.when(
-                            () -> Files.size(any(Path.class)))
-                    .thenReturn(expected);
+        filesMock.when( () -> Files.size(any(Path.class)))
+                 .thenReturn(expected);
             assertEquals(expected, dummy.getSize());
+    }
+
+    @Nested
+    @DisplayName("Tests of the exists() method")
+    class ExistsTests {
+
+        @Test
+        @DisplayName("Exists returns false when the file does not exist")
+        void existsReturnsFalse() {
+            filesMock.when( () -> Files.exists(any(Path.class) ) )
+                     .thenReturn(false);
+            var path = Paths.get("aFile");
+            var testFile = noWriteConstructor(path);
+            assertFalse(testFile.exists() );
+        }
+
+        @Test
+        @DisplayName("Exists returns true when the file exists")
+        void existsReturnsTrue() {
+            filesMock.when( () -> Files.exists(any(Path.class) ) )
+                    .thenReturn(true);
+            var path = Paths.get("aFile");
+            var testFile = noWriteConstructor(path);
+            assertTrue(testFile.exists() );
         }
     }
 

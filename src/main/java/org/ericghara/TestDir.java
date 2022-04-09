@@ -8,8 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This is intended for testing methods that implement filesystem I/O operations.  All files
@@ -18,7 +21,7 @@ import java.util.Set;
 public class TestDir {
 
     private final Path testDir; // parent which all relative paths in csv are resolved against
-    private final LinkedList<TestFile> files = new LinkedList<>(); // all files successfully written
+    private final Map<Path,TestFile> files = new HashMap<>(); // all files successfully written
     private final LinkedList<Path> dirs = new LinkedList<>(); // all dirs successfully written
 
     /**
@@ -34,15 +37,75 @@ public class TestDir {
         return testDir;
     }
 
-    public Set<TestFile> getFiles() {
-        return Set.copyOf(files);
+    public Set<Path> getFilePaths() {
+        return Set.copyOf(files.keySet() );
     }
 
-    public Set<Path> getDirs() {
+    /**
+     * Gets the file at the specified path or returns {@code null}
+     * if the file is not within this TestDir.  Note in
+     * order for a file to be retrieved it must have been
+     * created by this TestDir instance.
+     * @param path a relative or absolute path to the file
+     * @return the {@link TestFile} corresponding to the path or {@code null}
+     */
+    public TestFile getFile(Path path) {
+        try {
+            validatePath(path);
+        } catch(IllegalArgumentException e) {
+            return null;
+        }
+        Path absPath = testDir.resolve(path);
+        return files.get(absPath);
+    }
+
+
+    /**
+     * If the given path represents a relative or
+     * absolute path to a directory created by this {@link TestDir}
+     * instance, the absolute path to the directory is returned.
+     * @param path a relative or absolute path to the dir
+     * @return the absolute {@link Path} of the dir or {@code null}
+     */
+    public Path getDir(Path path) {
+        try {
+            validatePath(path);
+        } catch(IllegalArgumentException e) {
+            return null;
+        }
+        Path absPath = testDir.resolve(path);
+        return dirs.contains(absPath) ?
+                absPath : null;
+    }
+
+    /**
+     * If the given path represents a relative or
+     * absolute path to a directory created by this {@link TestDir}
+     * instance the absolute path to the directory is returned.
+     * @param pathStr a relative or absolute path to the dir
+     * @return the absolute {@link Path} of the dir or {@code null}
+     */
+    public Path getDir(String pathStr) {
+        Path path = Paths.get(pathStr);
+        return getDir(path);
+    }
+
+    /**
+     * Gets the file at the specified path or returns {@code null}
+     * if the file is not within this TestDir.  Note in
+     * order for a file to be retrieved it must have been
+     * created by this TestDir instance.
+     * @param pathStr a relative or absolute path to the file as a {String}
+     * @return the {@link TestFile} corresponding to the path or {@code null}
+     */
+    public TestFile getFile(String pathStr) {
+        Path path = Paths.get(pathStr);
+        return getFile(path);
+    }
+
+    public Set<Path> getDirPaths() {
         return Set.copyOf(dirs);
     }
-
-
 
     /**
      * Creates file of specified size at the given path.  The path if absolute must be within {@code testDir}
@@ -78,7 +141,7 @@ public class TestDir {
         }
         try {
             var file = new RandomFile(filePath, size, unit);
-            files.addLast(file);
+            files.put(filePath, file);
             return file;
         } catch (Exception e) {
             throw new IllegalArgumentException("Could not create the file:" + filePath + ".", e);

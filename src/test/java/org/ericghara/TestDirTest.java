@@ -44,13 +44,12 @@ class TestDirTest {
         assertEquals(expectedP, testFile.getPath());  // reports correct path
         assertTrue(Files.exists(expectedP) ); // creates file
         assertEquals(MB.toBytes(sizeMB),  Files.size(expectedP) ); // file size correct
-        assertTrue(testDir.getFiles()
+        assertTrue(testDir.getFilePaths()
                           .stream()
-                          .anyMatch(f -> f.getPath()
-                                          .equals(expectedP) ) ); // records file creation
+                          .anyMatch(p ->  p.equals(expectedP) ) ); // records file creation
         if (relP.getNameCount() > 1) {
             var dir = expectedP.getParent();
-            assertTrue(testDir.getDirs().contains(dir) ); // records subdir creation (if any)
+            assertTrue(testDir.getDirPaths().contains(dir) ); // records subdir creation (if any)
         }
     }
 
@@ -61,7 +60,7 @@ class TestDirTest {
         var foundP = testDir.createDirs(pathStr);
         assertEquals(expectedP, foundP); // reports correct path
         assertTrue(Files.isDirectory(expectedP) ); // creates directory at correct path
-        assertTrue(testDir.getDirs().contains(expectedP) ); // records dir creation
+        assertTrue(testDir.getDirPaths().contains(expectedP) ); // records dir creation
     }
 
 }
