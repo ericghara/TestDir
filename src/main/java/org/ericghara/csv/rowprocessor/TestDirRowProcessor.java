@@ -1,7 +1,7 @@
-package org.ericghara.parser.rowprocessor;
+package org.ericghara.csv.rowprocessor;
 
 import com.opencsv.processor.RowProcessor;
-import org.ericghara.parser.LineType;
+import org.ericghara.csv.LineType;
 
 import java.util.Map;
 import java.util.Objects;

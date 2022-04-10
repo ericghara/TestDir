@@ -1,7 +1,7 @@
 package org.ericghara;
 
-import org.ericghara.parser.ReaderUtils;
-import org.ericghara.parser.WriteFromCSV;
+import org.ericghara.csv.ReaderUtils;
+import org.ericghara.csv.WriteFromCSV;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -12,9 +12,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;

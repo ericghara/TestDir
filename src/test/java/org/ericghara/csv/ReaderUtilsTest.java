@@ -1,4 +1,4 @@
-package org.ericghara.parser;
+package org.ericghara.csv;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 class ReaderUtilsTest {
 
     Path FILENAME = Paths.get("basicTest.csv");
-    Path RESOURCE_DIR = Paths.get("src/test/resources/org/ericghara/parser");
+    Path RESOURCE_DIR = Paths.get("src/test/resources/org/ericghara/csv");
 
     String csv = """
             # This is an example csv file
@@ -47,7 +47,7 @@ class ReaderUtilsTest {
 
     @Test
     void getResourceFileReaderReadsResource() throws IOException {
-        var reader = ReaderUtils.getResourceFileReader(this, "/org/ericghara/parser/basicTest.csv" );
+        var reader = ReaderUtils.getResourceFileReader(this, "/org/ericghara/csv/basicTest.csv");
         char[] found = new char[csv.length()];
         reader.read(found);
         reader.close();

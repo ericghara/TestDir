@@ -1,5 +1,8 @@
 package org.ericghara;
 
+import org.ericghara.write.FileWriter;
+import org.ericghara.write.RandomByteSupplier;
+
 import java.math.BigDecimal;
 import java.nio.file.Path;
 

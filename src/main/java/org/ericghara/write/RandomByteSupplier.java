@@ -1,4 +1,4 @@
-package org.ericghara;
+package org.ericghara.write;
 
 import java.util.SplittableRandom;
 

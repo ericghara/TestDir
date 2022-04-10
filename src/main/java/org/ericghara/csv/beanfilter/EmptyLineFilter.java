@@ -1,4 +1,4 @@
-package org.ericghara.parser.beanfilter;
+package org.ericghara.csv.beanfilter;
 
 import com.opencsv.bean.CsvToBeanFilter;
 import lombok.NoArgsConstructor;
@@ -11,7 +11,6 @@ public class EmptyLineFilter implements CsvToBeanFilter {
 
     @Override
     public boolean allowLine(String[] line) {
-        var res = !line[0].isEmpty();
-        return res;
+        return !line[0].isEmpty();
     }
 }

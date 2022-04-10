@@ -1,4 +1,4 @@
-package org.ericghara.parser;
+package org.ericghara.csv;
 
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -12,10 +12,10 @@ import org.ericghara.TestDir;
 import org.ericghara.exception.DirCreationException;
 import org.ericghara.exception.FileCreationException;
 import org.ericghara.exception.ReaderCloseException;
-import org.ericghara.parser.beanfilter.EmptyLineFilter;
-import org.ericghara.parser.dto.TestDirCSVLine;
-import org.ericghara.parser.rowprocessor.TestDirRowProcessor;
-import org.ericghara.parser.rowvalidator.CorrectNumColumnsValidator;
+import org.ericghara.csv.beanfilter.EmptyLineFilter;
+import org.ericghara.csv.dto.TestDirCSVLine;
+import org.ericghara.csv.rowprocessor.TestDirRowProcessor;
+import org.ericghara.csv.rowvalidator.CorrectNumColumnsValidator;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static lombok.AccessLevel.PACKAGE;
-import static org.ericghara.parser.LineType.DIRECTORY;
-import static org.ericghara.parser.LineType.FILE;
+import static org.ericghara.csv.LineType.DIRECTORY;
+import static org.ericghara.csv.LineType.FILE;
 
 /**
  * Facilitates writing a CSV to a new or existing {@link TestDir}.  The CSV may be read in from any {@link Reader}.  The
@@ -224,8 +224,7 @@ public class WriteFromCSV {
             try (csvStream) {
                 var reader = buildCSVReader(csvStream);
                 var toBeans = buildCsvToBean(reader);
-                var out = toBeans.parse();
-                return out;
+                return toBeans.parse();
             } catch (IOException e) {
                 throw new ReaderCloseException("Failure closing the csvStream.", e);
             }

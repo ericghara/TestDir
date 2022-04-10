@@ -1,6 +1,7 @@
-package org.ericghara;
+package org.ericghara.write;
 
 import org.ericghara.exception.ByteUnderflowException;
+import org.ericghara.write.IntStreamByteSupplier;
 import org.junit.jupiter.api.Test;
 
 import java.util.stream.IntStream;

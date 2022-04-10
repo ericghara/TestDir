@@ -1,5 +1,6 @@
 package org.ericghara;
 
+import org.ericghara.write.RandomByteFrequenciesTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;

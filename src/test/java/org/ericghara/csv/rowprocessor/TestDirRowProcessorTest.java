@@ -1,6 +1,6 @@
-package org.ericghara.parser.rowprocessor;
+package org.ericghara.csv.rowprocessor;
 
-import org.ericghara.parser.LineType;
+import org.ericghara.csv.LineType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -27,9 +27,8 @@ class TestDirRowProcessorTest {
     void initEnumMapProperMapping() {
         var map = processor.initEnumMap();
         Stream.of(LineType.values() )
-              .forEach( e -> {
-            assertEquals(e, map.get(e.getKey() ) );
-        });
+              .forEach( e ->
+                      assertEquals(e, map.get(e.getKey() ) ));
     }
 
     @Test

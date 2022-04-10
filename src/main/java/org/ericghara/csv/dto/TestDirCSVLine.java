@@ -1,9 +1,9 @@
-package org.ericghara.parser.dto;
+package org.ericghara.csv.dto;
 
 import com.opencsv.bean.CsvBindByPosition;
 import lombok.*;
 import org.ericghara.SizeUnit;
-import org.ericghara.parser.LineType;
+import org.ericghara.csv.LineType;
 
 import java.math.BigDecimal;
 

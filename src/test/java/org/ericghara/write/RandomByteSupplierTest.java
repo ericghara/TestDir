@@ -1,5 +1,6 @@
-package org.ericghara;
+package org.ericghara.write;
 
+import org.ericghara.write.RandomByteSupplier;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;

@@ -1,4 +1,4 @@
-package org.ericghara.parser.rowvalidator;
+package org.ericghara.csv.rowvalidator;
 
 import com.opencsv.exceptions.CsvValidationException;
 import com.opencsv.validators.RowValidator;
@@ -9,8 +9,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.ericghara.parser.LineType.DIRECTORY;
-import static org.ericghara.parser.LineType.FILE;
+import static org.ericghara.csv.LineType.DIRECTORY;
+import static org.ericghara.csv.LineType.FILE;
 
 public class CorrectNumColumnsValidator implements RowValidator {
 

@@ -1,9 +1,9 @@
-package org.ericghara.parser;
+package org.ericghara.csv;
 
 import com.opencsv.exceptions.CsvException;
 import org.ericghara.SizeUnit;
 import org.ericghara.TestDir;
-import org.ericghara.parser.dto.TestDirCSVLine;
+import org.ericghara.csv.dto.TestDirCSVLine;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,8 +24,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.ericghara.SizeUnit.MB;
-import static org.ericghara.parser.LineType.DIRECTORY;
-import static org.ericghara.parser.LineType.FILE;
+import static org.ericghara.csv.LineType.DIRECTORY;
+import static org.ericghara.csv.LineType.FILE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;

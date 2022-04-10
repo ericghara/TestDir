@@ -1,4 +1,4 @@
-package org.ericghara.parser.rowvalidator;
+package org.ericghara.csv.rowvalidator;
 
 import com.opencsv.exceptions.CsvValidationException;
 import org.junit.jupiter.api.DisplayName;

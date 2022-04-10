@@ -1,4 +1,4 @@
-package org.ericghara;
+package org.ericghara.write;
 
 import org.apache.commons.math3.stat.inference.ChiSquareTest;
 

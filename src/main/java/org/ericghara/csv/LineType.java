@@ -1,4 +1,4 @@
-package org.ericghara.parser;
+package org.ericghara.csv;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

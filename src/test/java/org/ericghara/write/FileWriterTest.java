@@ -1,5 +1,8 @@
-package org.ericghara;
+package org.ericghara.write;
 
+import org.ericghara.write.ByteSupplier;
+import org.ericghara.write.FileWriter;
+import org.ericghara.write.RandomByteSupplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

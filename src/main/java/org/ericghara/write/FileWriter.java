@@ -1,6 +1,8 @@
-package org.ericghara;
+package org.ericghara.write;
 
 import lombok.NonNull;
+import org.ericghara.Constant;
+import org.ericghara.TestFile;
 import org.ericghara.exception.ByteUnderflowException;
 import org.ericghara.exception.WriteFailureException;
 
@@ -52,7 +54,7 @@ public class FileWriter {
      * @param supplier supplier of the bytes to be written
      * @throws WriteFailureException if any error occurs while writing
      * @throws IllegalArgumentException if start block is greater than file size
-     * @see org.ericghara.ByteSupplier
+     * @see ByteSupplier
      */
     public void write(long startPos,
                       long numBytes,
@@ -70,7 +72,7 @@ public class FileWriter {
      * @param numBytes number of bytes to write
      * @param supplier supplier of the bytes to be written
      * @throws WriteFailureException if any error occurs while writing
-     * @see org.ericghara.FileWriter#write(long, long, ByteSupplier)
+     * @see FileWriter#write(long, long, ByteSupplier)
      */
     public void write(long numBytes, ByteSupplier supplier)
             throws WriteFailureException {

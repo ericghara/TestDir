@@ -1,4 +1,4 @@
-package org.ericghara.parser;
+package org.ericghara.csv;
 
 import org.ericghara.exception.FileReadException;
 

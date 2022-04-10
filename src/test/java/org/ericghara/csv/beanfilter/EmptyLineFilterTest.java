@@ -1,4 +1,4 @@
-package org.ericghara.parser.beanfilter;
+package org.ericghara.csv.beanfilter;
 
 import org.junit.jupiter.api.Test;
 
