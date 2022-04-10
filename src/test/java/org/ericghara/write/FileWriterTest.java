@@ -1,15 +1,15 @@
 package org.ericghara.write;
 
-import org.ericghara.write.ByteSupplier;
-import org.ericghara.write.FileWriter;
-import org.ericghara.write.RandomByteSupplier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
@@ -34,9 +34,9 @@ class FileWriterTest {
     FileWriter writer;
 
     @BeforeEach
-    void beforeEach() throws IOException {
+    void beforeEach() {
         Path relPath = Paths.get("testFile");
-        filePath = Files.createFile(tempDir.resolve(relPath) );
+        filePath = tempDir.resolve(relPath);
         writer = new FileWriter(filePath);
     }
 
@@ -48,7 +48,7 @@ class FileWriterTest {
 
     @Test
     void fileSizeReturnsCorrectSize() throws IOException {
-        writer.write(1234, new RandomByteSupplier() );
+        writer.create(1234, new RandomByteSupplier() );
         assertEquals(Files.size(filePath), writer.fileSize() );
     }
 
@@ -58,25 +58,18 @@ class FileWriterTest {
 
         ByteSupplier supplier;
 
-        @BeforeEach
-        void BeforeEach() throws IOException {
-            var channel = Files.newByteChannel(filePath, WRITE);
-            channel.truncate(0);// Resets to 0 byte file.
-            channel.close();
-        }
-
         @Test
         void writeThrowsWhenNegativeNumBytes() {
             supplier = new RandomByteSupplier();
             assertThrows(IllegalArgumentException.class,
-                    () -> writer.write(-1, supplier) );
+                    () -> writer.create(-1, supplier) );
         }
 
         @ParameterizedTest
         @ValueSource(longs = {0, 1, 1234, 4096, 5678})
         void writeWritesExpectedNumBytes(long expectedBytes) {
             supplier = new RandomByteSupplier();
-            writer.write(expectedBytes, supplier);
+            writer.create(expectedBytes, supplier);
             assertEquals(expectedBytes, writer.fileSize() );
         }
 
@@ -86,7 +79,7 @@ class FileWriterTest {
             supplier = mock(RandomByteSupplier.class);
             lenient().when(supplier.getAsByte())
                     .thenReturn((byte) 255);
-            writer.write(expectedBytes, supplier);
+            writer.create(expectedBytes, supplier);
             verify(supplier, times( (int) expectedBytes) ).getAsByte();
         }
 
@@ -94,16 +87,24 @@ class FileWriterTest {
         @ValueSource(longs = {0, 1})
         void validStartPosTooLargeThrows(long pos) {
             supplier = new RandomByteSupplier();
-            writer.write(pos, supplier);
+            writer.create(pos, supplier);
             assertThrows(IllegalArgumentException.class,
-                    () -> writer.write(pos+1, 0, supplier) );
+                    () -> writer.modify(pos+1, 0, supplier) );
         }
 
         @Test
         void startPosNegativeThrows() {
+            MockedStatic<Files> filesMock = mockStatic(Files.class);
+            filesMock.when(() -> Files.size(any(Path.class) ) )
+                     .thenReturn(0L);
+            filesMock.when(() -> Files.isWritable(any(Path.class) ) )
+                    .thenReturn(true);
+            filesMock.when(() -> Files.isRegularFile(any(Path.class) ) )
+                    .thenReturn(true);
             supplier = new RandomByteSupplier();
             assertThrows(IllegalArgumentException.class,
-                    () -> writer.write(-1, 0, supplier) );
+                    () -> writer.modify(-1, 0, supplier) );
+            filesMock.closeOnDemand();
         }
 
         @ParameterizedTest
@@ -111,8 +112,8 @@ class FileWriterTest {
         void writeCanBeginAtNonZeroStartPos(long bytes) {
 
             supplier = new RandomByteSupplier();
-            writer.write(bytes, supplier);
-            writer.write(bytes, bytes, supplier);
+            writer.create(bytes, supplier);
+            writer.modify(bytes, bytes, supplier);
 
             assertEquals(2*bytes, writer.fileSize() );
         }
@@ -130,9 +131,9 @@ class FileWriterTest {
             };
 
             supplier = getSupplier.apply(firstBlock);
-            writer.write(bytes, supplier);
+            writer.create(bytes, supplier);
             supplier = getSupplier.apply(secondBlock);
-            writer.write(bytes, bytes, supplier);
+            writer.modify(bytes, bytes, supplier);
 
             var reader = ByteBuffer.allocateDirect(2*bytes);
             var channel = Files.newByteChannel(filePath);

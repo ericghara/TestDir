@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,14 +70,14 @@ public class FunctionalTests {
             Path parentDir = testDir.getDir("aDir");
 
             // Get TestFile instances of the files we created
-            TestFile fileA = testDir.getFile("aDir/aFile");
-            TestFile fileB = testDir.getFile("aDir/bFile");
+            Path fileA = testDir.getFile("aDir/aFile");
+            Path fileB = testDir.getFile("aDir/bFile");
 
             // run the unit we want to test
             deleteLargerThan.accept(parentDir, 2048L);
             // verify the results
-            assertTrue(fileA.exists() );
-            assertFalse(fileB.exists() );
+            assertTrue(Files.exists(fileA) );
+            assertFalse(Files.exists(fileB) );
         }
     }
 

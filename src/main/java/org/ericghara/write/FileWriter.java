@@ -2,12 +2,16 @@ package org.ericghara.write;
 
 import lombok.NonNull;
 import org.ericghara.Constant;
-import org.ericghara.TestFile;
+import org.ericghara.SizeUnit;
 import org.ericghara.exception.ByteUnderflowException;
+import org.ericghara.exception.FileCreationException;
+import org.ericghara.exception.FileReadException;
 import org.ericghara.exception.WriteFailureException;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -24,63 +28,102 @@ public class FileWriter {
     private final Path filePath;
 
     public FileWriter(Path filePath) {
-        this.filePath = assertValid(filePath);
+        this.filePath = assertValidCreate(filePath);
     }
 
-    public FileWriter(TestFile file) {
-        this(file.getPath() );
+    public FileWriter(@NonNull File file) {
+        this(file.toPath() );
     }
 
-    public long fileSize() throws RuntimeException {
+    public long fileSize() throws FileReadException {
         try {
             return Files.size(filePath);
         }
         catch (IOException e) {
-            throw new RuntimeException(
+            throw new FileReadException(
                     "Error reading file " + filePath, e);
         }
     }
 
     /**
-     * Writes bytes from {@code ByteSupplier} to a {@code filePath}.  The first
-     * byte is written to {@code startPos} and the number of bytes written is
-     * {@code numBytes}.
+     * Modifies an existing file, Writing bytes from {@code ByteSupplier}.
+     * The first byte is written to {@code startPos} and the number of bytes written is
+     * {@code numBytes}.  The data written is provided by {@code byteSupplier}.
+     *
      * <br><br>
-     * <em>Note: </em> the supplier must be able to provide the required number
+     * <em>Note: </em> the byteSupplier must be able to provide the required number
      * of bytes.
      * <br><br>
      * @param startPos position to write the first byte
      * @param numBytes number of bytes to write
-     * @param supplier supplier of the bytes to be written
-     * @throws WriteFailureException if any error occurs while writing
+     * @param byteSupplier byteSupplier of the bytes to be written
+     * @throws WriteFailureException if the file does not exist or if any error occurs while writing
      * @throws IllegalArgumentException if start block is greater than file size
      * @see ByteSupplier
+     * @see FileWriter#create
      */
-    public void write(long startPos,
-                      long numBytes,
-                      @NonNull ByteSupplier supplier)
+    public void modify(long startPos,
+                       long numBytes,
+                       @NonNull ByteSupplier byteSupplier)
             throws WriteFailureException, IllegalArgumentException {
-        new WriteJob(startPos, numBytes, supplier).write();
+        assertValidModify(filePath);
+        new WriteJob(startPos, numBytes, byteSupplier).write();
     }
 
     /**
-     * Writes bytes from {@code ByteSupplier} to a {@code filePath}.  The first
-     * byte is written to the beginning of file and the number of bytes written is
-     * {@code numBytes}.
+     * Creates a new file.  The data written is provided by {@code byteSupplier}.
+     * The size of the created file is {@code numBytes}.
      * <br><br>
-     * equivalent to: {@code write(0, numBytes, supplier}
      * @param numBytes number of bytes to write
-     * @param supplier supplier of the bytes to be written
+     * @param byteSupplier byteSupplier of the bytes to be written
      * @throws WriteFailureException if any error occurs while writing
-     * @see FileWriter#write(long, long, ByteSupplier)
+     * @throws FileCreationException if the file cannot be created for any reason (e.g. it already exists)
      */
-    public void write(long numBytes, ByteSupplier supplier)
-            throws WriteFailureException {
-        write(0, numBytes, supplier);
+    public void create(long numBytes, ByteSupplier byteSupplier)
+            throws FileCreationException, WriteFailureException {
+        try {
+            Files.createFile(filePath);
+        } catch (Exception e) {
+            throw new FileCreationException("Unable to create the file " + filePath, e);
+        }
+        modify(0, numBytes, byteSupplier);
+    }
+
+    /**
+     * Creates a new file.  The data written is provided by {@code byteSupplier}.
+     * The size of the created file is specified by {@code size} and {@code unit}.
+     * <br><br>
+     * @param size size of the file to create
+     * @param unit unit of size (i.e. {@link SizeUnit#MB}
+     * @param byteSupplier byteSupplier of the bytes to be written
+     * @throws WriteFailureException if any error occurs while writing
+     * @throws FileCreationException if the file cannot be created for any reason (e.g. it already exists)
+     */
+    public void create(BigDecimal size, SizeUnit unit, ByteSupplier byteSupplier) throws
+            FileCreationException, WriteFailureException{
+        long sizeB = unit.toBytes(size);
+        create(sizeB, byteSupplier);
+    }
+
+    // absolute, parent exists, parent writeable
+    Path assertValidCreate(Path path) throws WriteFailureException {
+        if (!path.isAbsolute() ) {
+            throw new WriteFailureException("The provided path is a relative file path.  " +
+                    "Provide an absolute path when creating the File/Path. " + path);
+        }
+        Path parent = path.getParent();
+        if (!Files.isDirectory(parent) ) {
+            throw new WriteFailureException(format("Invalid path, the parent directory does not exist: %s.", path) );
+        }
+        if (!Files.isWritable(parent) ) {
+            throw new WriteFailureException("Insufficient to permissions to write to the parent folder: " + parent);
+        }
+        return path;
     }
 
     // Path points to a regular file and is writeable
-    Path assertValid(Path path) throws WriteFailureException {
+    // Path known to be absolute (no check)
+    Path assertValidModify(Path path) throws WriteFailureException {
         if (Files.isRegularFile(path) &&
                 Files.isWritable(path) ) {
             return path;
