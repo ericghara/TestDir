@@ -1,4 +1,4 @@
-package org.ericghara;
+package org.ericghara.testdir;
 
 import org.ericghara.exception.DirCreationException;
 import org.ericghara.exception.FileCreationException;
@@ -6,19 +6,14 @@ import org.ericghara.write.ByteSupplier;
 import org.ericghara.write.FileWriter;
 import org.ericghara.write.RandomByteSupplier;
 
-import java.io.File;
 import java.math.BigDecimal;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * This is intended for testing methods that implement filesystem I/O operations.  All files
@@ -26,9 +21,10 @@ import java.util.stream.Collectors;
  */
 public class TestDir {
 
-    private final Path testDir; // parent which all relative paths in csv are resolved against
+    private final Path dirPath; // parent which all relative paths in csv are resolved against
+    private final FileSystem fileSystem;
     private final Set<Path> files = new HashSet<>(); // all files successfully written
-    private final LinkedList<Path> dirs = new LinkedList<>(); // all dirs successfully written
+    private final Set<Path> dirs = new HashSet<>(); // all dirs successfully written
 
     private ByteSupplier byteSupplier;
 
@@ -44,7 +40,8 @@ public class TestDir {
      */
     public TestDir(Path dirPath, ByteSupplier byteSupplier) throws IllegalArgumentException {
         mustBeDir(dirPath);
-        this.testDir = dirPath;
+        this.dirPath = dirPath;
+        this.fileSystem = dirPath.getFileSystem();
         this.byteSupplier = byteSupplier;
     }
 
@@ -61,32 +58,67 @@ public class TestDir {
         this(dirPath, new RandomByteSupplier() );
     }
 
-    public Path getTestDir() {
-        return testDir;
+    /**
+     * Returns a builder useful for configuring a new {@code TestDir}
+     *
+     * @return a {@link TestDirBuilder}
+     */
+    public static TestDirBuilder builder() {
+        return new TestDirBuilder();
     }
 
-    public void setByteSupplier(ByteSupplier byteSupplier) {
+    /**
+     * Path of this {@code TestDir}.  All files and folders
+     * created by this {@code TestDir} instance are children of
+     * the returned path.
+     * @return {@link Path} of this {@code TestDir} instance
+     */
+    public Path getPath() {
+        return dirPath;
+    }
+
+    /**
+     * The {@link FileSystem} used by this {TestDir}.<br><br>
+     *
+     * {@code TestDir}s are designed to use non-default fileSystems.
+     * This method provides access to the FileSystem used by this TestDir.<br><br>
+     *
+     * Example:<br>
+     * <pre>
+     *     Path onNonDefaultFs = ...;
+     *     TestDir testDir = new TestDir(onNonDefaultFs);
+     *     FileSystem fs = testDir.getFileSystem();
+     *     Path query = fs.getPath("aDir");
+     *     Path aDir = testDir.getDir(query);
+     * </pre>
+     *
+     * @return {@link FileSystem} of this {@code TestDir}
+     */
+    public FileSystem getFileSystem() {
+        return fileSystem;
+    }
+
+    /**
+     * @param byteSupplier the {@link ByteSupplier} to use.
+     * @throws IllegalArgumentException if the {@code byteSupplier} is null
+     */
+    public void setByteSupplier(ByteSupplier byteSupplier) throws IllegalArgumentException {
         if (Objects.isNull(byteSupplier) ) {
             throw new IllegalArgumentException("Received a null ByteSupplier");
         }
         this.byteSupplier = byteSupplier;
     }
 
+    /**
+     * @return the current {@link ByteSupplier}
+     */
     public ByteSupplier getByteSupplier() {
         return byteSupplier;
     }
 
     /**
-     * Paths of all files created by this {@link TestDir} instance
+     * Absolute paths of all files created by this {@link TestDir} instance
      * @return {@link Set} of file {@link Path}s
-     */
-    public Set<Path> getFilePaths() {
-        return Set.copyOf(files);
-    }
-
-    /**
-     * All files created by this {@link TestDir} instance
-     * @return {@link Set} of {@link Path}s
      */
     public Set<Path> getFiles() {
         return Set.copyOf(files);
@@ -108,7 +140,7 @@ public class TestDir {
         } catch(IllegalArgumentException e) {
             return null;
         }
-        Path absPath = testDir.resolve(query);
+        Path absPath = dirPath.resolve(query);
         return files.contains(absPath) ? absPath :
                 null;
     }
@@ -124,7 +156,7 @@ public class TestDir {
      * @return the absolute {@link Path} corresponding to the {@code query} or {@code null}
      */
     public Path getFile(String query) {
-        Path path = Paths.get(query);
+        Path path = fileSystem.getPath(query);
         return getFile(path);
     }
 
@@ -142,7 +174,7 @@ public class TestDir {
         } catch(IllegalArgumentException e) {
             return null;
         }
-        Path absPath = testDir.resolve(path);
+        Path absPath = dirPath.resolve(path);
         return dirs.contains(absPath) ?
                 absPath : null;
     }
@@ -155,11 +187,16 @@ public class TestDir {
      * @return the absolute {@link Path} of the dir or {@code null}
      */
     public Path getDir(String pathStr) {
-        Path path = Paths.get(pathStr);
+        Path path = fileSystem.getPath(pathStr);
         return getDir(path);
     }
 
-    public Set<Path> getDirPaths() {
+    /**
+     * Absolute paths of all the directories created
+     * by this {@link TestDir} instance
+     * @return {@code Set<Path>} of all dirs
+     */
+    public Set<Path> getDirs() {
         return Set.copyOf(dirs);
     }
 
@@ -171,10 +208,10 @@ public class TestDir {
      * @param unit the units which size was provided in
      * @return the {@link java.io.File} created
      * @throws FileCreationException if there are any errors creating or writing to the file
-     * @see org.ericghara.TestDir#createFile(Path, BigDecimal, SizeUnit)
+     * @see TestDir#createFile(Path, BigDecimal, SizeUnit)
      */
     public Path createFile(String pathString, BigDecimal size, SizeUnit unit) throws FileCreationException {
-        Path path = Paths.get(pathString);
+        Path path = fileSystem.getPath(pathString); //
         return createFile(path, size, unit);
     }
 
@@ -186,11 +223,11 @@ public class TestDir {
      * @param unit the units which size was provided in
      * @return the {@link Path} of the created file
      * @throws FileCreationException if there are any errors creating or writing to the file
-     * @see org.ericghara.TestDir#createFile(String, BigDecimal, SizeUnit)
+     * @see TestDir#createFile(String, BigDecimal, SizeUnit)
      */
     public Path createFile(Path path, BigDecimal size, SizeUnit unit) throws FileCreationException {
         validatePath(path);
-        Path absPath = testDir.resolve(path);
+        Path absPath = dirPath.resolve(path);
         Path parentPath = absPath.getParent();
         if (Files.notExists(parentPath, LinkOption.NOFOLLOW_LINKS)) {
             createDirs(parentPath);
@@ -216,7 +253,7 @@ public class TestDir {
      * @throws DirCreationException if there is any error creating the dirs
      */
     public Path createDirs(String pathString) throws IllegalArgumentException, DirCreationException {
-        Path path = Paths.get(pathString);
+        Path path = fileSystem.getPath(pathString);
         return createDirs(path);
     }
 
@@ -230,18 +267,30 @@ public class TestDir {
      */
     public Path createDirs(Path path) throws IllegalArgumentException, DirCreationException {
         validatePath(path);
-        Path absPath = testDir.resolve(path);
+        Path absPath = dirPath.resolve(path);
         try {
             Files.createDirectories(absPath);
         } catch (Exception e) {
             throw new DirCreationException(absPath.toString(), e);
         }
-        dirs.addLast(absPath);
+        recordDirs(absPath);
         return absPath;
     }
 
-    void validatePath(Path path) throws IllegalArgumentException {
-        if (path.isAbsolute() && !path.startsWith(testDir) ) {
+    private void recordDirs(Path absPath) {
+        while (!absPath.equals(dirPath) &&
+                dirs.add(absPath) ) {
+            absPath = absPath.getParent();
+        }
+    }
+
+    private void validatePath(Path path) throws IllegalArgumentException {
+        if (path.getFileSystem() != fileSystem) {
+            throw new IllegalArgumentException("The provided path is using a different filesystem than this testdir.\n" +
+                    "Consider passing the path as a string and allowing TestDir to convert it to a path, " +
+                    "or manually converting with TestDir#getFileSystem().getPath(...path)" );
+        }
+        if (path.isAbsolute() && !path.startsWith(dirPath) ) {
             throw new IllegalArgumentException("The specified path is not within the TestDir. " + path);
         }
     }

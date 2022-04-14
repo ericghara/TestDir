@@ -1,12 +1,11 @@
 package org.ericghara.write;
 
 import lombok.NonNull;
-import org.ericghara.Constant;
-import org.ericghara.SizeUnit;
 import org.ericghara.exception.ByteUnderflowException;
 import org.ericghara.exception.FileCreationException;
 import org.ericghara.exception.FileReadException;
 import org.ericghara.exception.WriteFailureException;
+import org.ericghara.testdir.SizeUnit;
 
 import java.io.Closeable;
 import java.io.File;
@@ -22,7 +21,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 public class FileWriter {
 
-    private static final int BLOCK_SIZE = Constant.BLOCK_SIZE.value;
+    private static final int BLOCK_SIZE = 4096;
 
     @NonNull
     private final Path filePath;

@@ -1,4 +1,4 @@
-package org.ericghara;
+package org.ericghara.testdir;
 
 import java.math.BigDecimal;
 

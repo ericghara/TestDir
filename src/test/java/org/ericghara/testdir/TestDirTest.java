@@ -1,7 +1,9 @@
-package org.ericghara;
+package org.ericghara.testdir;
 
+import com.google.common.jimfs.Jimfs;
 import org.ericghara.write.RandomByteFrequenciesTest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -10,13 +12,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
-import static org.ericghara.SizeUnit.B;
-import static org.ericghara.SizeUnit.MB;
+import static org.ericghara.testdir.SizeUnit.B;
+import static org.ericghara.testdir.SizeUnit.MB;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TestDirTest {
@@ -31,6 +34,22 @@ class TestDirTest {
         testDir = new TestDir(tempDir);
     }
 
+    @Test
+    @DisplayName("validatePath throws when different filesystem provided than testdir")
+    void validatePathThrowsWithDifferentFS() {
+        FileSystem homeFs = Jimfs.newFileSystem();
+        FileSystem otherFs = Jimfs.newFileSystem();
+
+        Path home = homeFs.getPath("").toAbsolutePath();
+        TestDir testDir = new TestDir(home);
+
+        Path aDirOnOther = otherFs.getPath("aDir");
+        assertThrows(IllegalArgumentException.class,
+                () -> testDir.createDirs(aDirOnOther) );
+
+    }
+
+
 
     @ParameterizedTest(name="[{index}] {0}")
     @CsvSource(useHeadersInDisplayName = true, delimiter = '|', textBlock = """
@@ -41,18 +60,18 @@ class TestDirTest {
             """)
     void createFile(String _label, String relativePath, BigDecimal sizeMB) throws IOException {
         Path foundPath = testDir.createFile(relativePath, sizeMB, MB);
-        Path relP =  Paths.get(relativePath);
+        Path relP =  testDir.getFileSystem().getPath(relativePath);
         Path expectedP = tempDir.resolve(relP);
 
         assertEquals(expectedP, foundPath);  // reports correct path
         assertTrue(Files.exists(expectedP) ); // creates file
         assertEquals(MB.toBytes(sizeMB),  Files.size(expectedP) ); // file size correct
-        assertTrue(testDir.getFilePaths()
+        assertTrue(testDir.getFiles()
                           .stream()
                           .anyMatch(p ->  p.equals(expectedP) ) ); // records file creation
         if (relP.getNameCount() > 1) {
             var dir = expectedP.getParent();
-            assertTrue(testDir.getDirPaths().contains(dir) ); // records subdir creation (if any)
+            assertTrue(testDir.getDirs().contains(dir) ); // records subdir creation (if any)
         }
     }
 
@@ -86,11 +105,21 @@ class TestDirTest {
     @Test
     void createFolder() {
         final var pathStr = "a/b/c/d";
-        var expectedP = tempDir.resolve(Paths.get(pathStr) );
+        var expectedP = tempDir.resolve(testDir.getFileSystem().getPath(pathStr) );
         var foundP = testDir.createDirs(pathStr);
         assertEquals(expectedP, foundP); // reports correct path
         assertTrue(Files.isDirectory(expectedP) ); // creates directory at correct path
-        assertTrue(testDir.getDirPaths().contains(expectedP) ); // records dir creation
     }
 
+    @Test
+    @DisplayName("recordDirs adds all subdirs created")
+    void recordDirs() {
+        final var pathStr = "a/b/c/d";
+        testDir.createDirs(pathStr);
+        Path testPath = testDir.getFileSystem().getPath("");
+        for (char dir = 'a'; dir < 'e'; dir++) {
+            testPath = testPath.resolve(Character.toString(dir));
+            assertTrue(Objects.nonNull(testDir.getDir(testPath) ) );
+        }
+    }
 }

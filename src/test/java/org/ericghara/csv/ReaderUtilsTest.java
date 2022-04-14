@@ -2,7 +2,6 @@ package org.ericghara.csv;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -24,8 +23,7 @@ class ReaderUtilsTest {
     @Test
     void getFileReaderReadsFile() throws IOException {
         var absPath = RESOURCE_DIR.resolve(FILENAME);
-        File file = new File(absPath.toUri() );
-        var foundReader = ReaderUtils.getFileReader(file);
+        var foundReader = ReaderUtils.getFileReader(absPath);
         char[] found = new char[csv.length()];
         foundReader.read(found);
         foundReader.close();

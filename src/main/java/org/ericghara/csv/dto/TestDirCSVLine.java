@@ -1,9 +1,14 @@
 package org.ericghara.csv.dto;
 
 import com.opencsv.bean.CsvBindByPosition;
-import lombok.*;
-import org.ericghara.SizeUnit;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import org.ericghara.csv.LineType;
+import org.ericghara.testdir.SizeUnit;
 
 import java.math.BigDecimal;
 

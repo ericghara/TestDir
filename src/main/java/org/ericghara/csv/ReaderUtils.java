@@ -3,20 +3,23 @@ package org.ericghara.csv;
 import org.ericghara.exception.FileReadException;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
 import java.io.StringReader;
-import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * A collection of functions to create {@link Reader}s from common text sources.
  */
 public class ReaderUtils {
 
-    public static Reader getFileReader(File file) throws FileReadException {
+    public static Reader getFileReader(Path filePath) throws FileReadException {
         try {
-            return new BufferedReader(new FileReader(file));
+            return new BufferedReader(new FileReader(filePath.toFile() ));
         } catch (Exception e) {
             throw new FileReadException("Unable to instantiate reader.", e);
         }
@@ -43,13 +46,15 @@ public class ReaderUtils {
      *
      */
     public static Reader getResourceFileReader(Object aThis, String csvName) throws FileReadException {
-        File csv;
-        try {
-            URI csvPath = aThis.getClass().getResource(csvName).toURI();
-            csv = new File(csvPath);
-        } catch (Exception e) {
-            throw new FileReadException("Couldn't open the csv " + csvName, e);
+        URL url = aThis.getClass().getResource(csvName);
+        if (Objects.isNull(url) ) {
+            throw new FileReadException("Could not open the resource " + csvName);
         }
-        return getFileReader(csv);
+        try {
+            Path csv = Paths.get(url.toURI() );
+            return getFileReader(csv);
+        } catch(URISyntaxException e) {
+            throw new FileReadException("Could not convert resource to a path:  " + csvName);
+        }
     }
 }

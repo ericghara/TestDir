@@ -1,9 +1,9 @@
 package org.ericghara.csv;
 
 import com.opencsv.exceptions.CsvException;
-import org.ericghara.SizeUnit;
-import org.ericghara.TestDir;
 import org.ericghara.csv.dto.TestDirCSVLine;
+import org.ericghara.testdir.SizeUnit;
+import org.ericghara.testdir.TestDir;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,11 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static org.ericghara.SizeUnit.MB;
 import static org.ericghara.csv.LineType.DIRECTORY;
 import static org.ericghara.csv.LineType.FILE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.ericghara.testdir.SizeUnit.MB;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,7 +49,8 @@ class WriteFromCSVTest {
         writer.write(testDir, csvStream);
 
         verify(testDir, times(1) ).createDirs(any(String.class) );
-        verify(testDir, times(1) ).createFile(any(String.class), any(BigDecimal.class), any(SizeUnit.class) );
+        verify(testDir, times(1) )
+                .createFile(any(String.class), any(BigDecimal.class), any(SizeUnit.class) );
     }
 
 
@@ -138,11 +138,7 @@ class WriteFromCSVTest {
 
             final String[] foundSplit = lines.get(0);
             var expectedSplit = expected.split("\\s*,\\s*");
-
-            for (int i = 0; i < expectedSplit.length; i++) {
-                    assertEquals(expectedSplit[i], foundSplit[i]);
-            }
-            assertEquals(expectedSplit.length, foundSplit.length);
+            assertArrayEquals(expectedSplit, foundSplit);
         }
     }
 

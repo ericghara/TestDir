@@ -1,11 +1,11 @@
-package org.ericghara;
+package org.ericghara.testdir;
 
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 
-import static org.ericghara.SizeUnit.B;
-import static org.ericghara.SizeUnit.KB;
+import static org.ericghara.testdir.SizeUnit.B;
+import static org.ericghara.testdir.SizeUnit.KB;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SizeUnitTest {

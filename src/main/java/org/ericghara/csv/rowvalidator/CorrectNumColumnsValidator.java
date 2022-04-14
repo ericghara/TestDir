@@ -2,7 +2,7 @@ package org.ericghara.csv.rowvalidator;
 
 import com.opencsv.exceptions.CsvValidationException;
 import com.opencsv.validators.RowValidator;
-import org.ericghara.SizeUnit;
+import org.ericghara.testdir.SizeUnit;
 
 import java.util.Objects;
 import java.util.Set;

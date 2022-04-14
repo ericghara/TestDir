@@ -2,13 +2,13 @@ package org.ericghara;
 
 import org.ericghara.csv.ReaderUtils;
 import org.ericghara.csv.WriteFromCSV;
+import org.ericghara.testdir.TestDir;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
