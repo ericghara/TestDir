@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'application'
+    id 'java-library'
     id "io.freefair.lombok" version "6.4.2"
 }
 
@@ -10,6 +10,8 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
     }
+    withJavadocJar()
+    withSourcesJar()
 }
 
 repositories {
@@ -26,10 +28,6 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter:4.4.0'
 }
 
-application {
-    mainClass.set('org.ericghara.TestDir')
-}
-
 tasks.named('jar') {
     manifest {
         attributes(
@@ -40,12 +38,7 @@ tasks.named('jar') {
     }
 }
 
-tasks.withType(JavaCompile).each {
-    it.options.compilerArgs.add('--enable-preview')
-}
-
 test {
-    jvmArgs(['--enable-preview'])
     useJUnitPlatform()
 }
 

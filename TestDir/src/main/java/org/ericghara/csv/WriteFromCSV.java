@@ -56,7 +56,7 @@ import static org.ericghara.csv.LineType.FILE;
  *         <ol>
  *             <li>D - this key specifies a directory entry type (non case sensitive)</li>
  *             <li>Path - the directory path. If the path has spaces, the path must be enclosed in quotes.  If quotes
- *                occur in the path, they must be escaped with: <code>\\</code>.</li></li>
+ *                occur in the path, they must be escaped with: <code>\\</code>.</li>
  *         </ol>
  *     </li>
  *     <li>
@@ -76,11 +76,11 @@ import static org.ericghara.csv.LineType.FILE;
  *         Paths that include a comma the path should be enclosed in quotes: {@code "aDir/File,with,commas"}.
  *     </li>
  *     <li>
- *         If a path includes a quote character {@code (")} it must be escaped with a double backslash ({@code //}),<br>
+ *         If a path includes a quote character {@code (")} it must be escaped with a double backslash ({@code //}),
  *         E.g {@code aDir/File\\"with\\"quotes} represents the path {@code aDir/file"with"quotes}
  *     </li>
- *     <br><br>
- *     Example:
+ * </ul>
+ * Example:
  *     <pre>
  *         # This is an example csv file
  *         # FileType  Path        Size  Units(Optional)
@@ -88,7 +88,6 @@ import static org.ericghara.csv.LineType.FILE;
  *           F,        aDir/b File  16,    B  # read in as aDir/b File
  *           F,        bDir/aFile, 1.34   MB
  *     </pre>
- * </ul>
  */
 public class WriteFromCSV {
 

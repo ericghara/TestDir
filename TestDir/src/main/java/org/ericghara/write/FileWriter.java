@@ -165,10 +165,14 @@ public class FileWriter {
                 partialFill( (int) remain);
                 channel.write(buffer);
             } catch (Exception e) {
-                switch (e) {
-                    case IOException _e -> throw new WriteFailureException("Error writing to file", e);
-                    case ByteUnderflowException _e -> throw new WriteFailureException("Empty buffer", e);
-                    case default -> throw new WriteFailureException("Unknown exception, see stacktrace", e);
+                if (e instanceof IOException){
+                    throw new WriteFailureException("Error writing to file", e);
+                }
+                if (e instanceof ByteUnderflowException) {
+                    throw new WriteFailureException("Empty buffer", e);
+                }
+                else {
+                    throw new WriteFailureException("Unknown exception, see stacktrace", e);
                 }
             }
         }
