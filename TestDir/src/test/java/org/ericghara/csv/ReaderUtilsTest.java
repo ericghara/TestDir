@@ -16,9 +16,9 @@ class ReaderUtilsTest {
     String csv = """
             # This is an example csv file
             # FileType   Path            Size  Units(Optional)
-              D          aDir
-              F          "aDir/b File"   16    B
-              F          bDir/aFile      1.34         # defaults to MB, bDir is implicitly created""";
+              D,          aDir
+              F,          "aDir/b File",   16,    B
+              F,          bDir/aFile,      1.34 , MB""";
 
     @Test
     void getFileReaderReadsFile() throws IOException {
