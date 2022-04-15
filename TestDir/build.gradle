@@ -81,30 +81,30 @@ publishing {
             name = project.name
             url 'https://maven.pkg.github.com/ericghara/TestDir'
             credentials {
-                username System.getenv('GITHUB_ACTOR')
-                password System.getenv('TESTDIR_TOKEN')
+                username System.getenv('GITHUB_USERNAME')
+                password System.getenv('GITHUB_TOKEN')
             }
         }
-//        maven {
-//            if (project.version.contains("-SNAPSHOT") ) {
-//                // snapshot repository
-//                url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
-//            }
-//            else {
-//                // release repository
-//                url 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
-//            }
-//            credentials {
-//                username System.getenv('SONATYPE_USERNAME')
-//                password System.getenv('SONATYPE_PASSWORD')
-//            }
-//        }
+        maven {
+            if (project.version.contains("-SNAPSHOT") ) {
+                // snapshot repository
+                url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            }
+            else {
+                // release repository
+                url 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            }
+            credentials {
+                username System.getenv('SONATYPE_USERNAME')
+                password System.getenv('SONATYPE_PASSWORD')
+            }
+        }
     }
 }
 
-//signing {
-//    def signingKey = System.getenv("SIGNING_KEY")
-//    def signingPassword = System.getenv("SIGNING_PASSWORD")
-//    useInMemoryPgpKeys(signingKey, signingPassword)
-//    sign publishing.publications.mavenJava
-//}
+signing {
+    def signingKey = System.getenv("SIGNING_KEY")
+    def signingPassword = System.getenv("SIGNING_PASSWORD")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications.mavenJava
+}
