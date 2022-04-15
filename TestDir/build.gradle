@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'java-library'
+    id 'maven-publish'
     id "io.freefair.lombok" version "6.4.2"
 }
 
@@ -28,6 +29,10 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter:4.4.0'
 }
 
+test {
+    useJUnitPlatform()
+}
+
 tasks.named('jar') {
     manifest {
         attributes(
@@ -38,7 +43,21 @@ tasks.named('jar') {
     }
 }
 
-test {
-    useJUnitPlatform()
-}
 
+publishing {
+    publications {
+        TestDir(MavenPublication) {
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            name = "TestDir"
+            url = "https://maven.pkg.github.com/ericghara/TestDir"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("TESTDIR_TOKEN")
+            }
+        }
+    }
+}
