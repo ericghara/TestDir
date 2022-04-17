@@ -1,4 +1,4 @@
-package org.ericghara.testdir;
+package org.ericghara.core;
 
 import org.ericghara.exception.DirCreationException;
 import org.ericghara.exception.FileCreationException;

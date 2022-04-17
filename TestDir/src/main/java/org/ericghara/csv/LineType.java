@@ -6,7 +6,14 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum LineType {
 
+    /**
+     * File Line type
+     */
     FILE("F"),
+
+    /**
+     * Directory Line Type
+     */
     DIRECTORY("D");
 
     @Getter

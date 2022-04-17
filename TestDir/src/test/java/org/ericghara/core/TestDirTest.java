@@ -1,4 +1,4 @@
-package org.ericghara.testdir;
+package org.ericghara.core;
 
 import com.google.common.jimfs.Jimfs;
 import org.ericghara.write.RandomByteFrequenciesTest;
@@ -18,8 +18,8 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.BooleanSupplier;
 
-import static org.ericghara.testdir.SizeUnit.B;
-import static org.ericghara.testdir.SizeUnit.MB;
+import static org.ericghara.core.SizeUnit.B;
+import static org.ericghara.core.SizeUnit.MB;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TestDirTest {

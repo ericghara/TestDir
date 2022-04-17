@@ -1,4 +1,4 @@
-package org.ericghara.testdir;
+package org.ericghara.core;
 
 import com.google.common.jimfs.Configuration;
 import org.junit.jupiter.api.DisplayName;
@@ -8,7 +8,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static com.google.common.jimfs.Configuration.osX;
-import static org.ericghara.testdir.FsType.OSX;
+import static org.ericghara.core.FsType.OSX;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 

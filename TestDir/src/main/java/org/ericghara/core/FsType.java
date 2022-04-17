@@ -1,4 +1,4 @@
-package org.ericghara.testdir;
+package org.ericghara.core;
 
 import com.google.common.jimfs.Configuration;
 

@@ -1,11 +1,11 @@
 package org.ericghara.write;
 
 import lombok.NonNull;
+import org.ericghara.core.SizeUnit;
 import org.ericghara.exception.ByteUnderflowException;
 import org.ericghara.exception.FileCreationException;
 import org.ericghara.exception.FileReadException;
 import org.ericghara.exception.WriteFailureException;
-import org.ericghara.testdir.SizeUnit;
 
 import java.io.Closeable;
 import java.io.File;

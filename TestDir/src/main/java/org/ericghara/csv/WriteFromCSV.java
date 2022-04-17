@@ -10,6 +10,8 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.MappingStrategy;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
+import org.ericghara.core.SizeUnit;
+import org.ericghara.core.TestDir;
 import org.ericghara.csv.beanfilter.EmptyLineFilter;
 import org.ericghara.csv.dto.TestDirCSVLine;
 import org.ericghara.csv.rowprocessor.TestDirRowProcessor;
@@ -17,8 +19,6 @@ import org.ericghara.csv.rowvalidator.CorrectNumColumnsValidator;
 import org.ericghara.exception.DirCreationException;
 import org.ericghara.exception.FileCreationException;
 import org.ericghara.exception.ReaderCloseException;
-import org.ericghara.testdir.SizeUnit;
-import org.ericghara.testdir.TestDir;
 
 import java.io.IOException;
 import java.io.Reader;

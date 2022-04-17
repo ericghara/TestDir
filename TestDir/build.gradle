@@ -1,11 +1,12 @@
 plugins {
-    id 'java'
     id 'java-library'
     id 'maven-publish'
+    id 'signing'
     id "io.freefair.lombok" version "6.4.2"
 }
 
-version = '0.0.1'
+version = '0.0.2'
+group = 'com.ericgha'
 
 java {
     toolchain {
@@ -43,22 +44,68 @@ tasks.named('jar') {
     }
 }
 
-
 publishing {
     publications {
-        TestDir(MavenPublication) {
-            from components.java
-            artifactId "testdir"
+        mavenJava(MavenPublication) {
+            groupId = 'com.ericgha'
+            artifactId = project.name.toLowerCase()
+            version = project.version
+            from(components.java)
+
+            pom {
+                name = project.name.toLowerCase()
+                description = 'A library to facilitate testing file I/O'
+                url = 'https://github.com/ericghara/TestDir'
+                licenses {
+                    license {
+                        name = 'The MIT License (MIT)'
+                        url = 'https://github.com/ericghara/TestDir/blob/f522b4edeecc91b980267b2b734e784eef01c7f3/LICENSE'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'ericgha'
+                        name = 'Eric'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/ericghara/TestDir'
+                    connection = 'scm:git://github.com/ericghara/TestDir.git'
+                    developerConnection = 'scm:git://github.com/ericghara/TestDir.git'
+                }
+            }
         }
     }
     repositories {
         maven {
-            name = "TestDir"
-            url = "https://maven.pkg.github.com/ericghara/TestDir"
+            url 'https://maven.pkg.github.com/ericghara/TestDir'
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("TESTDIR_TOKEN")
+                username System.getenv('GITHUB_ACTOR')
+                password System.getenv('TESTDIR_TOKEN')
+            }
+        }
+        maven {
+            // if the version contains the -SNAPSHOT suffix it will be deployed here
+            url 'https://s01.oss.sonatype.org/content/repositories/snapshots/'
+            credentials {
+                username System.getenv('SONATYPE_USERNAME')
+                password System.getenv('SONATYPE_PASSWORD')
+            }
+        }
+        maven {
+            // else release will be deployed here
+            url 'https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/'
+            credentials {
+                username System.getenv('SONATYPE_USERNAME')
+                password System.getenv('SONATYPE_PASSWORD')
             }
         }
     }
+}
+
+signing {
+    def signingKey = System.getenv("SIGNING_KEY")
+    def signingPassword = System.getenv("SIGNING_PASSWORD")
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign publishing.publications.mavenJava
 }

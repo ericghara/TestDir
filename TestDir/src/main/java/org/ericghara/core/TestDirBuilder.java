@@ -1,4 +1,4 @@
-package org.ericghara.testdir;
+package org.ericghara.core;
 
 import com.google.common.jimfs.Jimfs;
 import lombok.Getter;
@@ -15,7 +15,7 @@ import java.nio.file.Path;
 import java.util.Iterator;
 
 @ToString
-class TestDirBuilder {
+public class TestDirBuilder {
 
     @Getter
     private Reader csvStream;

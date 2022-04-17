@@ -1,8 +1,8 @@
 package org.ericghara;
 
+import org.ericghara.core.TestDir;
 import org.ericghara.csv.ReaderUtils;
 import org.ericghara.csv.WriteFromCSV;
-import org.ericghara.testdir.TestDir;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
