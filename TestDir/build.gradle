@@ -78,7 +78,7 @@ publishing {
     }
     repositories {
         maven {
-            name project.name.toLowerCase()
+            name project.name
             url 'https://maven.pkg.github.com/ericghara/TestDir'
             credentials {
                 username System.getenv('GITHUB_ACTOR')
