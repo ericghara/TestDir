@@ -41,8 +41,8 @@ jobs:
       with:
         arguments: publish
       env:
-        USERNAME: ${{ github.actor }}
-        TOKEN: ${{ secrets.TESTDIR_TOKEN }}
+        GITHUB_USERNAME: ${{ github.actor }}
+        GITHUB_TOKEN: ${{ secrets.TESTDIR_TOKEN }}
         SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
