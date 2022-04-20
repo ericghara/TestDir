@@ -1,4 +1,4 @@
-package org.ericghara.write;
+package org.ericghara.write.bytesupplier;
 
 import java.util.SplittableRandom;
 

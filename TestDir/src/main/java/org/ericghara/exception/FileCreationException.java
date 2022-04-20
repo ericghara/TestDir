@@ -1,5 +1,8 @@
 package org.ericghara.exception;
 
+/**
+ * An exception during file creation.
+ */
 public class FileCreationException extends RuntimeException {
 
     public FileCreationException() {

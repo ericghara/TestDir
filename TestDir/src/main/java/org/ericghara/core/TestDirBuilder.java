@@ -6,8 +6,8 @@ import lombok.NonNull;
 import lombok.ToString;
 import org.ericghara.csv.ReaderUtils;
 import org.ericghara.csv.WriteFromCSV;
-import org.ericghara.write.ByteSupplier;
-import org.ericghara.write.RandomByteSupplier;
+import org.ericghara.write.bytesupplier.ByteSupplier;
+import org.ericghara.write.bytesupplier.RandomByteSupplier;
 
 import java.io.Reader;
 import java.nio.file.FileSystem;

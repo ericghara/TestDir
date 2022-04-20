@@ -1,5 +1,8 @@
 package org.ericghara.exception;
 
+/**
+ * An exception while performing a filesystem write.
+ */
 public class WriteFailureException extends RuntimeException {
 
     public WriteFailureException() {

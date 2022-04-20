@@ -2,9 +2,10 @@ package org.ericghara.core;
 
 import org.ericghara.exception.DirCreationException;
 import org.ericghara.exception.FileCreationException;
-import org.ericghara.write.ByteSupplier;
+import org.ericghara.exception.WriteFailureException;
 import org.ericghara.write.FileWriter;
-import org.ericghara.write.RandomByteSupplier;
+import org.ericghara.write.bytesupplier.ByteSupplier;
+import org.ericghara.write.bytesupplier.RandomByteSupplier;
 
 import java.math.BigDecimal;
 import java.nio.file.FileSystem;
@@ -242,6 +243,53 @@ public class TestDir {
         } catch (Exception e) {
             throw new IllegalArgumentException("Could not create the file:" + absPath + ".", e);
         }
+    }
+
+    /**
+     * Writes to an already existing file using the current {@link ByteSupplier}.  The
+     * file size will remain constant if the end position is {@literal <}= the file size; otherwise
+     * the file size will increase.
+     * @param path the file to modify (must be within this {@code TestDir}
+     * @param startPos the position of the first byte to modify, in the units specified by {@code unit}
+     * @param endPos the end byte (exclusive), in the units specified by {@code unit}
+     * @param unit the units of {@code startPos} and {@code endPos}
+     * @return absolute {@link Path} of the file modified
+     * @throws IllegalArgumentException if the {@code path} is not a file in this TestDir
+     * @throws IllegalArgumentException if {@code endPos} is {@literal <} start pos or {@code startPos} is negative
+     * @throws WriteFailureException if any I/O error occurs
+     */
+    public Path modifyFile(Path path, BigDecimal startPos, BigDecimal endPos, SizeUnit unit ) throws
+            IllegalArgumentException, WriteFailureException {
+        Path absPath = getFile(path);
+        if (Objects.isNull(absPath) ) {
+            throw new IllegalArgumentException("The supplied path is not a file in this TestDir. " + path);
+        }
+        long startByte = unit.toBytes(startPos);
+        long numBytes = unit.toBytes(endPos) - startByte;
+        new FileWriter(absPath).modify(startByte, numBytes, byteSupplier);
+        return absPath;
+    }
+
+    /**
+     * Writes to an already existing file using the current {@link ByteSupplier}.  The
+     * file size will remain constant if the end position is {@literal <}= the file size; otherwise
+     * the file size will increase.
+     * @param pathString the file to modify (must be within this {@code TestDir}
+     * @param startPos the position of the first byte to modify, in the units specified by {@code unit}
+     * @param endPos the end byte (exclusive), in the units specified by {@code unit}
+     * @param unit the units of {@code startPos} and {@code endPos}
+     * @return absolute {@link Path} of the file modified
+     * @throws IllegalArgumentException if the {@code path} is not a file in this TestDir or if {@code startPos} is negative
+     * @throws IllegalArgumentException if {@code endPos} is {@literal <} start pos or {@code startPos} is negative
+     * @throws WriteFailureException if any I/O error occurs
+     */
+    public Path modifyFile(String pathString, BigDecimal startPos, BigDecimal endPos, SizeUnit unit ) throws
+            IllegalArgumentException, WriteFailureException {
+        Path absPath = getFile(pathString);
+        if (Objects.isNull(absPath) ) {
+            throw new IllegalArgumentException("The supplied path is not a file in this TestDir. " + pathString);
+        }
+        return modifyFile(absPath, startPos, endPos, unit);
     }
 
     /**

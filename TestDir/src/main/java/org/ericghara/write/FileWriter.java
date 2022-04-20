@@ -6,9 +6,9 @@ import org.ericghara.exception.ByteUnderflowException;
 import org.ericghara.exception.FileCreationException;
 import org.ericghara.exception.FileReadException;
 import org.ericghara.exception.WriteFailureException;
+import org.ericghara.write.bytesupplier.ByteSupplier;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
@@ -28,10 +28,6 @@ public class FileWriter {
 
     public FileWriter(Path filePath) {
         this.filePath = assertValidCreate(filePath);
-    }
-
-    public FileWriter(@NonNull File file) {
-        this(file.toPath() );
     }
 
     public long fileSize() throws FileReadException {

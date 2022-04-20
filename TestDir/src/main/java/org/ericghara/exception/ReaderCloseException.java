@@ -1,5 +1,8 @@
 package org.ericghara.exception;
 
+/**
+ * An exception while closing a {@link java.io.Reader Reader}.
+ */
 public class ReaderCloseException extends RuntimeException {
 
     public ReaderCloseException() {

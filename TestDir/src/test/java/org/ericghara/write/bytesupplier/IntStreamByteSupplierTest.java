@@ -1,4 +1,4 @@
-package org.ericghara.write;
+package org.ericghara.write.bytesupplier;
 
 import org.ericghara.exception.ByteUnderflowException;
 import org.junit.jupiter.api.Test;

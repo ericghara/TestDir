@@ -1,5 +1,8 @@
 package org.ericghara.exception;
 
+/**
+ * An exception during the read of file.
+ */
 public class FileReadException extends RuntimeException {
 
     public FileReadException() {

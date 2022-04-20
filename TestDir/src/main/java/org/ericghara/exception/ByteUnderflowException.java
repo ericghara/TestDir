@@ -1,5 +1,8 @@
 package org.ericghara.exception;
 
+/**
+ * Signals a byte underflow
+ */
 public class ByteUnderflowException extends RuntimeException {
 
 

@@ -1,5 +1,8 @@
 package org.ericghara.exception;
 
+/**
+ * An exception during directory creation
+ */
 public class DirCreationException extends RuntimeException {
     public DirCreationException() {
         super();
