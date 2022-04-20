@@ -1,12 +1,15 @@
 package org.ericghara.core;
 
+import lombok.NonNull;
 import org.ericghara.exception.DirCreationException;
 import org.ericghara.exception.FileCreationException;
+import org.ericghara.exception.FileReadException;
 import org.ericghara.exception.WriteFailureException;
-import org.ericghara.write.FileWriter;
+import org.ericghara.write.ByteWriter;
 import org.ericghara.write.bytesupplier.ByteSupplier;
 import org.ericghara.write.bytesupplier.RandomByteSupplier;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -15,6 +18,8 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+
+import static java.nio.file.StandardOpenOption.WRITE;
 
 /**
  * This is intended for testing methods that implement filesystem I/O operations.  All files
@@ -212,7 +217,7 @@ public class TestDir {
      * @see TestDir#createFile(Path, BigDecimal, SizeUnit)
      */
     public Path createFile(String pathString, BigDecimal size, SizeUnit unit) throws FileCreationException {
-        Path path = fileSystem.getPath(pathString); //
+        Path path = fileSystem.getPath(pathString);
         return createFile(path, size, unit);
     }
 
@@ -237,12 +242,68 @@ public class TestDir {
             throw new FileCreationException("The specified file already exists: " + path);
         }
         try {
-            new FileWriter(absPath).create(size, unit, byteSupplier);
+            new ByteWriter(absPath).create(size, unit, byteSupplier);
             files.add(absPath);
             return absPath;
         } catch (Exception e) {
             throw new IllegalArgumentException("Could not create the file:" + absPath + ".", e);
         }
+    }
+
+    /**
+     * Resizes a file in this {@link TestDir}.  If new data needs to be written
+     * it is supplied by the current {@link ByteSupplier}.
+     * @param path file to resize
+     * @param newSize the size the file will be resized to
+     * @param unit the unit of measurement for {@code newSize}
+     * @return absolute {@link Path} to the file modified
+     * @throws FileReadException if the current file size cannot be read
+     * @throws IllegalArgumentException if {@code path} is not a file in this {@link TestDir}
+     * @throws WriteFailureException if any exception occurs while increasing the file size
+     * @see TestDir#getByteSupplier()
+     * @see TestDir#setByteSupplier(ByteSupplier)
+     */
+    public Path resizeFile(Path path, @NonNull BigDecimal newSize, @NonNull SizeUnit unit)
+            throws FileReadException, IllegalArgumentException, WriteFailureException {
+        Path absPath = getFileThrows(path);
+        BigDecimal curSize;
+        try {
+            curSize = unit.fromBytes(Files.size(absPath) );
+        } catch (IOException e) {
+            throw new FileReadException("Could not read the file size. " + absPath);
+        }
+        if (curSize.compareTo(newSize) > 0 ) {
+            try {
+                var channel = Files.newByteChannel(absPath, WRITE);
+                channel.truncate(unit.toBytes(newSize) );
+            } catch (IOException e) {
+                throw new WriteFailureException("Unable to reduce the file size", e);
+            }
+        }
+        else {
+            BigDecimal numUnits = newSize.subtract(curSize);
+            new ByteWriter(absPath).modify(
+                    curSize, numUnits, unit, byteSupplier);
+        }
+        return absPath;
+    }
+
+    /**
+     * Resizes a file in this {@link TestDir}.  If new data needs to be written
+     * it is supplied by the current {@link ByteSupplier}.
+     * @param pathStr file to resize
+     * @param newSize the size the file will be resized to
+     * @param unit the unit of measurement for {@code newSize}
+     * @return absolute {@link Path} to the file modified
+     * @throws FileReadException if the current file size cannot be read
+     * @throws IllegalArgumentException if {@code path} is not a file in this {@link TestDir}
+     * @throws WriteFailureException if any exception occurs while increasing the file size
+     * @see TestDir#getByteSupplier()
+     * @see TestDir#setByteSupplier(ByteSupplier)
+     */
+    public Path resizeFile(String pathStr, @NonNull BigDecimal newSize, @NonNull SizeUnit unit)
+            throws FileReadException, IllegalArgumentException {
+        return resizeFile(getFileThrows(pathStr), newSize, unit);
     }
 
     /**
@@ -260,13 +321,10 @@ public class TestDir {
      */
     public Path modifyFile(Path path, BigDecimal startPos, BigDecimal endPos, SizeUnit unit ) throws
             IllegalArgumentException, WriteFailureException {
-        Path absPath = getFile(path);
-        if (Objects.isNull(absPath) ) {
-            throw new IllegalArgumentException("The supplied path is not a file in this TestDir. " + path);
-        }
+        Path absPath = getFileThrows(path);
         long startByte = unit.toBytes(startPos);
         long numBytes = unit.toBytes(endPos) - startByte;
-        new FileWriter(absPath).modify(startByte, numBytes, byteSupplier);
+        new ByteWriter(absPath).modify(startByte, numBytes, byteSupplier);
         return absPath;
     }
 
@@ -323,6 +381,19 @@ public class TestDir {
         }
         recordDirs(absPath);
         return absPath;
+    }
+
+    private Path getFileThrows(Path path) throws IllegalArgumentException {
+        Path absPath = getFile(path);
+        if (Objects.isNull(absPath) ) {
+            throw new IllegalArgumentException("The supplied path is not a file in this TestDir. " + path);
+        }
+        return absPath;
+    }
+
+    private Path getFileThrows(String pathString) throws IllegalArgumentException {
+        Path path = fileSystem.getPath(pathString);
+        return getFileThrows(path);
     }
 
     private void recordDirs(Path absPath) {

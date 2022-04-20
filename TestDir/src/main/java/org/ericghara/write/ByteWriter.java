@@ -19,14 +19,14 @@ import java.nio.file.Path;
 import static java.lang.String.format;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-public class FileWriter {
+public class ByteWriter {
 
     private static final int BLOCK_SIZE = 4096;
 
     @NonNull
     private final Path filePath;
 
-    public FileWriter(Path filePath) {
+    public ByteWriter(Path filePath) {
         this.filePath = assertValidCreate(filePath);
     }
 
@@ -55,7 +55,7 @@ public class FileWriter {
      * @throws WriteFailureException if the file does not exist or if any error occurs while writing
      * @throws IllegalArgumentException if start block is greater than file size
      * @see ByteSupplier
-     * @see FileWriter#create
+     * @see ByteWriter#create
      */
     public void modify(long startPos,
                        long numBytes,
@@ -63,6 +63,76 @@ public class FileWriter {
             throws WriteFailureException, IllegalArgumentException {
         assertValidModify(filePath);
         new WriteJob(startPos, numBytes, byteSupplier).write();
+    }
+
+    /**
+     * Modifies an existing file, Writing bytes from {@code ByteSupplier}.
+     * The first byte is written to {@code startPos} and the amount of data written
+     * is {@code numUnits}.  The units of {@code startPos} and {@code numUnits} are
+     * defined by {@code unit}.  The data written is provided by {@code byteSupplier}.
+     *
+     * <br><br>
+     * <em>Note: </em> the byteSupplier must be able to provide the required number
+     * of bytes.
+     * <br><br>
+     * @param startPos position to write the first byte
+     * @param numUnits number of {@code unit}s to write
+     * @param unit size unit of {@code startPos} and {@code endPos}
+     * @param byteSupplier byteSupplier of the bytes to be written
+     * @throws WriteFailureException if the file does not exist or if any error occurs while writing
+     * @throws IllegalArgumentException if start block is greater than file size
+     * @see ByteSupplier
+     * @see ByteWriter#create
+     */
+    public void modify(@NonNull BigDecimal startPos,
+                       @NonNull BigDecimal numUnits,
+                       @NonNull SizeUnit unit,
+                       ByteSupplier byteSupplier) throws WriteFailureException, IllegalArgumentException {
+        modify(unit.toBytes(startPos), unit.toBytes(numUnits), byteSupplier);
+    }
+
+    /**
+     * Reduces a file size by truncating all data beyond {@code newSize}.
+     *
+     * @param newSize the size of the new file
+     * @param unit the units of {@code newSize}
+     * @throws WriteFailureException if an invalid path is provided
+     * @throws WriteFailureException if the current file size is {@literal <} the new size
+     * @throws WriteFailureException if an IO error occurs while writing to the filesystem
+     * @throws FileReadException if the file size cannot be read
+     */
+    public void truncate(@NonNull BigDecimal newSize,
+                         @NonNull SizeUnit unit) throws WriteFailureException, FileReadException {
+        truncate(unit.toBytes(newSize) );
+    }
+
+    /**
+     * Reduces a file size by truncating all data beyond {@code newSize}.
+     *
+     * @param newSize the size of the new file in bytes.  This is equivalent to the smallest byte index
+     *                to be removed from the file.
+     * @throws WriteFailureException if an invalid path is provided
+     * @throws WriteFailureException if the current file size is {@literal <} the new size
+     * @throws WriteFailureException if an IO error occurs while writing to the filesystem
+     * @throws FileReadException if the file size cannot be read
+     */
+    public void truncate(long newSize) throws WriteFailureException, FileReadException {
+        assertValidModify(filePath);
+        long curSize;
+        try {
+            curSize = Files.size(filePath);
+        } catch (IOException e) {
+            throw new FileReadException("Could not read the file size. " + filePath);
+        }
+        if (newSize >= curSize) {
+            throw new WriteFailureException("The current file size is no less than newSize");
+        }
+        try {
+            var channel = Files.newByteChannel(filePath, WRITE);
+            channel.truncate(newSize);
+        } catch (IOException e) {
+            throw new WriteFailureException("Unable to truncate the file " + filePath, e);
+        }
     }
 
     /**
